@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ALPHAVIEW — Crypto Intelligence</title>
+
   <style>
+
+.ticker-card[data-symbol] {
+  cursor:pointer;
+  transition:.2s;
+}
+
+.ticker-card[data-symbol]:hover {
+  background:#111a2d;
+}
+
     :root{
       --bg:#060b15;
       --panel:#0b1220;
@@ -219,14 +230,44 @@
       </div>
     </header>
 
-    <section class="ticker">
-      <div class="ticker-card"><span>BTC/USDT</span><strong>$67,254.03</strong> <small class="up">▲ +1.82%</small></div>
-      <div class="ticker-card"><span>ETH/USDT</span><strong>$3,512.41</strong> <small class="up">▲ +2.35%</small></div>
-      <div class="ticker-card"><span>SOL/USDT</span><strong>$175.32</strong> <small class="down">▼ -0.71%</small></div>
-      <div class="ticker-card"><span>TOTAL MKT CAP</span><strong>$2.48T</strong> <small class="up">▲ +1.21%</small></div>
-      <div class="ticker-card"><span>BTC DOMINANCE</span><strong>53.46%</strong> <small class="down">▼ -0.35%</small></div>
-      <div class="ticker-card"><span>FEAR & GREED</span><strong class="up">72</strong></div>
-    </section>
+<section class="ticker">
+
+  <div class="ticker-card" data-symbol="BTCUSDT">
+    <span>BTC/USDT</span>
+    <strong>Loading...</strong>
+    <small>--</small>
+  </div>
+
+  <div class="ticker-card" data-symbol="ETHUSDT">
+    <span>ETH/USDT</span>
+    <strong>Loading...</strong>
+    <small>--</small>
+  </div>
+
+  <div class="ticker-card" data-symbol="SOLUSDT">
+    <span>SOL/USDT</span>
+    <strong>Loading...</strong>
+    <small>--</small>
+  </div>
+
+  <div class="ticker-card">
+    <span>TOTAL MKT CAP</span>
+    <strong>$2.48T</strong>
+    <small class="up">▲ +1.21%</small>
+  </div>
+
+  <div class="ticker-card">
+    <span>BTC DOMINANCE</span>
+    <strong>53.46%</strong>
+    <small>▼ -0.35%</small>
+  </div>
+
+  <div class="ticker-card">
+    <span>FEAR & GREED</span>
+    <strong class="up">72</strong>
+  </div>
+
+</section>
 
     <div class="content">
       <div class="dashboard-grid">
@@ -234,8 +275,8 @@
           <div class="asset-head">
             <div>
               <div class="asset-title">
-                <div class="coin">₿</div>
-                <div><h1>BTC/USDT</h1><p>Bitcoin / TetherUS</p></div>
+           <div class="coin" id="coinIcon">₿</div>
+                <div>  <h1 id="assetName">BTC/USDT</h1> <p id="assetDescription">Bitcoin / TetherUS</p></div>
               </div>
               <div class="price">$67,254.03 <span class="up" style="font-size:13px">+1.82% (24h)</span></div>
             </div>
@@ -325,7 +366,8 @@ const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 
 let currentInterval = "1d";
-let currentCandles = [];
+    let currentSymbol = "BTCUSDT";
+let currentCandles =[];
 let socket = null;
 
 
@@ -366,15 +408,15 @@ function money(value) {
 // BINANCE KLINES
 // ===============================
 
-async function fetchKlines(interval) {
+async function fetchKlines(interval, symbol= currentSymbol) {
 
   const url =
-    `${BINANCE_API}/klines?symbol=BTCUSDT&interval=${interval}&limit=120`;
+    `${BINANCE_API}/klines?symbol=${symbol}&interval=${interval}&limit=120`;
 
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Binance API error");
+    throw new Error("Binance Kline API error");
   }
 
   const data = await response.json();
@@ -389,15 +431,59 @@ async function fetchKlines(interval) {
   }));
 }
 
+async function updateTickerCards() {
+
+  const cards =
+    document.querySelectorAll(".ticker-card[data-symbol]");
+
+  for (const card of cards) {
+
+    const symbol = card.dataset.symbol;
+
+    try {
+
+      const ticker =
+        await fetchTicker(symbol);
+
+      const price =
+        Number(ticker.lastPrice);
+
+      const change =
+        Number(ticker.priceChangePercent);
+
+      card.querySelector("strong").textContent =
+        money(price);
+
+      const small =
+        card.querySelector("small");
+
+      small.textContent =
+        change >= 0
+          ? `▲ +${change.toFixed(2)}%`
+          : `▼ ${change.toFixed(2)}%`;
+
+      small.className =
+        change >= 0 ? "up" : "down";
+
+    } catch(error) {
+
+      console.error(
+        `${symbol} ticker error`,
+        error
+      );
+    }
+  }
+}
+
 
 // ===============================
 // BTC TICKER
 // ===============================
 
-async function fetchTicker() {
+async function fetchTicker(symbol = currentSymbol) {
 
   const response = await fetch(
-    `${BINANCE_API}/ticker/24hr?symbol=BTCUSDT`
+    `${BINANCE_API}/ticker/24hr?symbol=${symbol}`
   );
 
   if (!response.ok) {
@@ -406,7 +492,6 @@ async function fetchTicker() {
 
   return await response.json();
 }
-
 
 // ===============================
 // UPDATE PRICE
@@ -455,35 +540,35 @@ function updateBTCInfo(ticker) {
 
   // BTC ticker
 
-  const btcCard =
-    document.querySelector(".ticker-card");
+ const selectedCard =
+  document.querySelector(
+    `.ticker-card[data-symbol="${currentSymbol}"]`
+  );
 
-  if (btcCard) {
+if (selectedCard) {
 
-    const strong =
-      btcCard.querySelector("strong");
+  const strong =
+    selectedCard.querySelector("strong");
 
-    const small =
-      btcCard.querySelector("small");
+  const small =
+    selectedCard.querySelector("small");
 
-    if (strong) {
-      strong.textContent = money(price);
-    }
-
-    if (small) {
-
-      small.textContent =
-        change >= 0
-          ? `▲ +${change.toFixed(2)}%`
-          : `▼ ${change.toFixed(2)}%`;
-
-      small.className =
-        change >= 0 ? "up" : "down";
-    }
+  if (strong) {
+    strong.textContent = money(price);
   }
+
+  if (small) {
+
+    small.textContent =
+      change >= 0
+        ? `▲ +${change.toFixed(2)}%`
+        : `▼ ${change.toFixed(2)}%`;
+
+    small.className =
+      change >= 0 ? "up" : "down";
+  }
+} 
 }
-
-
 // ===============================
 // DRAW REAL CANDLES
 // ===============================
@@ -653,68 +738,90 @@ async function loadMarket(interval) {
 
   try {
 
+currentInterval = interval;
+
     currentCandles =
-      await fetchKlines(interval);
+
+      await fetchKlines(
+
+        interval,
+
+        currentSymbol
+
+      );
 
     const ticker =
-      await fetchTicker();
+
+      await fetchTicker(
+
+        currentSymbol
+
+      );
 
     updateBTCInfo(ticker);
 
     const rect =
+
       canvas.getBoundingClientRect();
 
     drawChart(
+
       currentCandles,
+
       rect.width,
+
       rect.height
+
     );
 
   } catch (error) {
 
     console.error(
+
       "ALPHAVIEW:",
+
       error
+
     );
+
   }
+
 }
+
+   
 
 
 // ===============================
 // REAL-TIME BINANCE WEBSOCKET
 // ===============================
 
-function connectRealtime(interval) {
+  
 
-  // 기존 연결 종료
+function connectRealtime(interval) {
 
   if (socket) {
     socket.close();
+    socket = null;
   }
 
+  const streamSymbol = currentSymbol.toLowerCase();
 
-  socket =
-    new WebSocket(
-      `wss://stream.binance.com:9443/ws/btcusdt@kline_${interval}`
-    );
-
+  socket = new WebSocket(
+    `wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${interval}`
+  );
 
   socket.onopen = () => {
-
     console.log(
       "ALPHAVIEW realtime connected:",
+      currentSymbol,
       interval
     );
   };
 
-
   socket.onmessage = event => {
 
-    const data =
-      JSON.parse(event.data);
-
-    const k =
-      data.k;
+    const data = JSON.parse(event.data);
+    const k = data.k;
 
     const candle = {
       time: k.t,
@@ -725,19 +832,12 @@ function connectRealtime(interval) {
       volume: Number(k.v)
     };
 
-
-    // 현재 캔들 업데이트
-
     if (
       currentCandles.length &&
-      currentCandles[
-        currentCandles.length - 1
-      ].time === candle.time
+      currentCandles[currentCandles.length - 1].time === candle.time
     ) {
 
-      currentCandles[
-        currentCandles.length - 1
-      ] = candle;
+      currentCandles[currentCandles.length - 1] = candle;
 
     } else {
 
@@ -748,11 +848,7 @@ function connectRealtime(interval) {
       }
     }
 
-
-    // 차트 다시 그림
-
-    const rect =
-      canvas.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
 
     drawChart(
       currentCandles,
@@ -760,9 +856,7 @@ function connectRealtime(interval) {
       rect.height
     );
 
-
-    // 현재 BTC 가격도 즉시 변경
-
+    // 실시간 현재 가격
     const priceElement =
       document.querySelector(".price");
 
@@ -771,7 +865,7 @@ function connectRealtime(interval) {
       priceElement.innerHTML = `
         ${money(candle.close)}
         <span
-          class="up"
+          class="${candle.close >= candle.open ? "up" : "down"}"
           style="font-size:13px"
         >
           LIVE
@@ -780,7 +874,6 @@ function connectRealtime(interval) {
     }
   };
 
-
   socket.onerror = error => {
     console.error(
       "Binance WebSocket error:",
@@ -788,84 +881,34 @@ function connectRealtime(interval) {
     );
   };
 
-
   socket.onclose = () => {
-
     console.log(
-      "Binance realtime disconnected"
+      "Binance realtime disconnected:",
+      currentSymbol
     );
   };
 }
-
-
-// ===============================
-// TIMEFRAME
-// ===============================
-
-const intervalMap = {
-
-  "1m": "1m",
-  "5m": "5m",
-  "15m": "15m",
-  "1h": "1h",
-  "4h": "4h",
-  "1D": "1d",
-  "1W": "1w"
-
-};
-
-
-document
-  .querySelectorAll(".timeframes button")
-  .forEach(button => {
-
-    button.addEventListener("click", async () => {
-
-      document
-        .querySelectorAll(".timeframes button")
-        .forEach(b =>
-          b.classList.remove("active")
-        );
-
-      button.classList.add("active");
-
-      currentInterval =
-        intervalMap[
-          button.textContent.trim()
-        ];
-
-      await loadMarket(currentInterval);
-
-      connectRealtime(currentInterval);
-    });
-  });
-
-
 // ===============================
 // SIDEBAR
 // ===============================
 
 document
-  .querySelectorAll(".nav button")
-  .forEach(btn => {
+  .querySelectorAll(".ticker-card[data-symbol]")
+  .forEach(card=> {
 
-    btn.addEventListener("click", () => {
+    card.addEventListener("click", async () => {
 
-      document
-        .querySelectorAll(".nav button")
-        .forEach(x =>
-          x.classList.remove("active")
-        );
+      currentSymbol =
 
-      btn.classList.add("active");
+        card.dataset.symbol;
 
-      alert(
-        btn.dataset.page +
-        " page will be connected in the next development step."
-      );
+      await loadMarket(currentInterval);
+
+      connectRealtime(currentInterval);
+
     });
-  });
 
+  });
 
 // ===============================
 // VIP
@@ -891,6 +934,10 @@ loadMarket("1d").then(() => {
 
 });
 
+updateTickerCards( );
+
+setInterval(updateTickerCards, 10000);
+
 
 // BTC 24h information refresh
 
@@ -903,12 +950,79 @@ setInterval(async () => {
 
     updateBTCInfo(ticker);
 
+const assetName = document.getElementById("assetName");
+const assetDescription = document.getElementById("assetDescription");
+const coinIcon = document.getElementById("coinIcon");
+
+const assetInfo = {
+  BTCUSDT: {
+    name: "BTC/USDT",
+    description: "Bitcoin / TetherUS",
+    icon: "₿"
+  },
+  ETHUSDT: {
+    name: "ETH/USDT",
+    description: "Ethereum / TetherUS",
+    icon: "Ξ"
+  },
+  SOLUSDT: {
+    name: "SOL/USDT",
+    description: "Solana / TetherUS",
+    icon: "S"
+  }
+};
+
+const info = assetInfo[currentSymbol];
+
+if (info) {
+  assetName.textContent = info.name;
+  assetDescription.textContent = info.description;
+  coinIcon.textContent = info.icon;
+}
+
   } catch (error) {
 
     console.error(error);
   }
 
 }, 10000);
+
+document
+  .querySelectorAll(".timeframes button")
+  .forEach(button => {
+
+    button.addEventListener("click", async () => {
+
+      const intervalMap = {
+        "1m": "1m",
+        "5m": "5m",
+        "15m": "15m",
+        "1h": "1h",
+        "4h": "4h",
+        "1D": "1d",
+        "1W": "1w"
+      };
+
+      const interval =
+        intervalMap[button.textContent.trim()];
+
+      if (!interval) return;
+
+      document
+        .querySelectorAll(".timeframes button")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      await loadMarket(interval);
+
+      connectRealtime(interval);
+
+    });
+
+  });
 
 </script>
 </body>
