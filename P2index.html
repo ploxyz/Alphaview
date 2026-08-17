@@ -1,49 +1,400 @@
-A ALPHAVIEW
-⌂ Overview  ☆ Watchlist  ⌁ Chart  ◈ AI Signals  ▣ Portfolio  ♧ Trading Journal  ◫ Backtesting  ⚙ Settings
-Unlock Premium
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALPHAVIEW — Crypto Intelligence</title>
+  <style>
+    :root{
+      --bg:#060b15;
+      --panel:#0b1220;
+      --panel-2:#0e1727;
+      --border:#1b2638;
+      --text:#f5f7fb;
+      --muted:#7f8ba3;
+      --green:#00d69a;
+      --red:#ff5266;
+      --purple:#7c4dff;
+      --blue:#4d7cff;
+    }
 
-Advanced AI analysis, unlimited signals and personalized insights.
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at 75% -20%,#182044 0,#060b15 38%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    button{font:inherit}
+    .app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
 
-Upgrade to VIP
-Dashboard  Markets  AI Analysis  Portfolio  Alerts  News
-Upgrade to VIP ◉
-A
-₿
-BTC/USDT
+    /* Sidebar */
+    .sidebar{
+      position:fixed;left:0;top:0;bottom:0;width:210px;
+      background:rgba(5,10,20,.94);
+      border-right:1px solid var(--border);
+      padding:20px 16px;
+      display:flex;flex-direction:column;
+      z-index:10;
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.4px;margin-bottom:32px}
+    .logo{
+      width:28px;height:28px;border-radius:9px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#6f48ff,#21d7bd);
+      clip-path:polygon(50% 0,100% 100%,70% 100%,50% 48%,30% 100%,0 100%);
+    }
+    .nav{display:flex;flex-direction:column;gap:6px}
+    .nav button{
+      border:0;background:transparent;color:#8c97aa;
+      padding:11px 12px;border-radius:8px;text-align:left;
+      cursor:pointer;transition:.2s;
+    }
+    .nav button:hover,.nav button.active{background:#141b3d;color:#83a1ff}
+    .premium{
+      margin-top:auto;padding:16px;border:1px solid #242342;border-radius:10px;
+      background:linear-gradient(160deg,#17152d,#0b1020);
+    }
+    .premium h3{font-size:14px;margin-bottom:9px}
+    .premium p{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:13px}
+    .vip-btn{
+      width:100%;border:0;border-radius:7px;padding:10px;
+      color:white;background:linear-gradient(90deg,#693dff,#8a45ff);
+      cursor:pointer;font-weight:700;
+    }
 
-Bitcoin / TetherUS
+    /* Main */
+    .main{grid-column:2;min-width:0}
+    .topbar{
+      height:59px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 18px;position:sticky;top:0;background:rgba(6,11,21,.86);
+      backdrop-filter:blur(14px);z-index:8;
+    }
+    .topnav{display:flex;gap:32px}
+    .topnav button{background:none;border:0;color:#a1aabd;cursor:pointer;padding:20px 0}
+    .topnav button.active{color:#7895ff;border-bottom:2px solid #657cff}
+    .top-actions{display:flex;align-items:center;gap:10px}
+    .top-vip{padding:9px 14px;border-radius:8px;border:0;background:#6037e9;color:white;cursor:pointer;font-weight:700}
+    .avatar{width:30px;height:30px;border-radius:50%;background:#5d4bdf;display:grid;place-items:center;font-weight:700}
 
-$67,254.03 +1.82%
-High$67,890.00
-Low$65,432.10
-24h Volume$28.41B
-Market Cap$1.32T
-1m5m15m  1h4h1D1W
-RSI (14)—Loading...
-MACD (12,26,9)—Loading...
-Stochastic—Loading...
-EMA 20/50/200—Trend
-AI Market Probability Updated 2 min ago
-67%Bullish
-67%Bullish
-33%Bearish
-TrendBullish+18
-MomentumBullish+12
-VolumeNeutral+2
-Funding RateBearish-7
-Open InterestBullish+9
-Market SentimentBullish+11
-Composite Score+45
-My Portfolio Total Value $29,542.21
-Asset	Amount	Avg Price	Current	P&L
-₿ BTC	0.2415	$62,182	$67,254	+$1,224
-Ξ ETH	1.2500	$3,102	$3,512	+$512
-S SOL	10.000	$142.30	$175.32	+$330
-Recent AI Signals View All
-BTC/USDTLONG67%
-ETH/USDTLONG64%
-SOL/USDTSHORT58%
-News View All
-Bitcoin ETF inflows continue for 7th consecutive day2 min ago
-Ethereum network activity reaches new high25 min ago
-Fed signals potential rate cut in September1 hour ago
+    .ticker{
+      display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));
+      border-bottom:1px solid var(--border);
+      overflow:hidden;
+    }
+    .ticker-card{padding:12px 16px;border-right:1px solid var(--border)}
+    .ticker-card span{display:block;color:#818da2;font-size:11px;margin-bottom:5px}
+    .ticker-card strong{font-size:14px}
+    .up{color:var(--green)} .down{color:var(--red)}
+
+    .content{padding:12px;display:grid;gap:12px}
+    .dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) 395px;gap:12px}
+    .card{
+      background:linear-gradient(180deg,rgba(13,21,36,.95),rgba(8,14,25,.95));
+      border:1px solid var(--border);border-radius:9px;
+      box-shadow:0 12px 35px rgba(0,0,0,.12);
+    }
+
+    /* Chart */
+    .chart-card{padding:16px}
+    .asset-head{display:flex;justify-content:space-between;gap:20px}
+    .asset-title{display:flex;gap:10px;align-items:center}
+    .coin{width:36px;height:36px;border-radius:50%;background:#f7931a;display:grid;place-items:center;font-weight:900}
+    .asset-title h1{font-size:19px}
+    .asset-title p{font-size:11px;color:var(--muted);margin-top:3px}
+    .price{font-size:27px;font-weight:750;margin-top:17px}
+    .stats{display:flex;gap:25px}
+    .stat span{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}
+    .stat strong{font-size:12px}
+    .timeframes{display:flex;gap:15px;margin:17px 0 10px;color:#9ca6b8;font-size:11px}
+    .timeframes button{background:none;border:0;color:inherit;cursor:pointer}
+    .timeframes button.active{background:#17224a;color:#8ea4ff;padding:5px 8px;border-radius:5px}
+    .chart-wrap{height:355px;position:relative;overflow:hidden;border-top:1px solid #111c2c;border-bottom:1px solid #111c2c}
+    .grid-lines{
+      position:absolute;inset:0;
+      background-image:
+        linear-gradient(rgba(77,101,135,.12) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(77,101,135,.08) 1px,transparent 1px);
+      background-size:100% 20%,10% 100%;
+    }
+    canvas{position:absolute;inset:0;width:100%;height:100%}
+    .indicator-bar{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;border:1px solid var(--border);border-radius:7px;overflow:hidden}
+    .indicator{padding:13px;border-right:1px solid var(--border)}
+    .indicator:last-child{border:0}
+    .indicator span{font-size:10px;color:var(--muted)}
+    .indicator strong{display:block;font-size:15px;margin:5px 0}
+    .indicator small{font-size:10px;color:#929db0}
+
+    /* AI */
+    .ai-card{padding:17px}
+    .card-title{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700}
+    .subtle{color:var(--muted);font-size:10px;font-weight:400}
+    .gauge{height:185px;display:grid;place-items:center;position:relative}
+    .gauge-ring{
+      width:150px;height:150px;border-radius:50%;
+      background:conic-gradient(var(--green) 0 67%,var(--purple) 67% 100%);
+      padding:13px;transform:rotate(-20deg);
+    }
+    .gauge-ring:after{content:"";display:block;width:100%;height:100%;background:#0b1322;border-radius:50%}
+    .gauge-text{position:absolute;text-align:center}
+    .gauge-text strong{font-size:31px;color:var(--green)}
+    .gauge-text p{color:var(--green);font-weight:700;font-size:13px}
+    .prob-row{display:flex;justify-content:center;gap:45px;margin-top:-10px}
+    .prob-row strong{font-size:25px}.prob-row p{font-size:10px;color:var(--muted);margin-top:2px}
+    .breakdown{margin-top:20px;border-top:1px solid var(--border)}
+    .break-row{display:grid;grid-template-columns:1fr 80px 45px;padding:9px 0;border-bottom:1px solid #111b2a;font-size:11px}
+    .break-row span:nth-child(2){text-align:center}
+    .break-row span:last-child{text-align:right}
+    .score{display:flex;justify-content:space-between;padding-top:13px;font-weight:700}
+    .score strong{color:var(--green)}
+
+    .bottom-grid{display:grid;grid-template-columns:1.35fr .8fr .8fr;gap:12px}
+    .section-card{padding:16px}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:11px}
+    th{text-align:left;color:var(--muted);font-weight:500;padding:8px;border-bottom:1px solid var(--border)}
+    td{padding:10px 8px;border-bottom:1px solid #111a29}
+    .asset-dot{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#6278da;margin-right:6px}
+    .signal{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #111a29;font-size:11px}
+    .tag{padding:4px 7px;border-radius:5px;background:#06291f;color:var(--green);font-size:10px}
+    .news-item{padding:11px 0;border-bottom:1px solid #111a29;font-size:11px;line-height:1.5}
+    .news-item small{display:block;color:var(--muted);margin-top:4px}
+
+    /* Responsive */
+    @media(max-width:1100px){
+      .dashboard-grid{grid-template-columns:1fr}
+      .bottom-grid{grid-template-columns:1fr}
+      .ticker{grid-template-columns:repeat(3,1fr)}
+    }
+    @media(max-width:760px){
+      .app{display:block}
+      .sidebar{position:relative;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--border)}
+      .premium{display:none}
+      .nav{display:none}
+      .main{width:100%}
+      .topnav{gap:14px;overflow:auto}
+      .topnav button{white-space:nowrap}
+      .ticker{grid-template-columns:repeat(2,1fr)}
+      .stats{display:none}
+      .indicator-bar{grid-template-columns:repeat(2,1fr)}
+      .chart-wrap{height:280px}
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="logo"></span> ALPHAVIEW</div>
+    <nav class="nav">
+      <button class="active" data-page="Overview">⌂ &nbsp; Overview</button>
+      <button data-page="Watchlist">☆ &nbsp; Watchlist</button>
+      <button data-page="Chart">⌁ &nbsp; Chart</button>
+      <button data-page="AI Signals">◈ &nbsp; AI Signals</button>
+      <button data-page="Portfolio">▣ &nbsp; Portfolio</button>
+      <button data-page="Trading Journal">♧ &nbsp; Trading Journal</button>
+      <button data-page="Backtesting">◫ &nbsp; Backtesting</button>
+      <button data-page="Settings">⚙ &nbsp; Settings</button>
+    </nav>
+    <div class="premium">
+      <h3>Unlock Premium Features</h3>
+      <p>Get advanced AI analysis, unlimited signals, and personalized insights.</p>
+      <button class="vip-btn" onclick="upgrade()">♛ Upgrade to VIP</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <nav class="topnav">
+        <button class="active">Dashboard</button>
+        <button>Markets</button>
+        <button>AI Analysis</button>
+        <button>Portfolio</button>
+        <button>Alerts</button>
+        <button>News</button>
+      </nav>
+      <div class="top-actions">
+        <button class="top-vip" onclick="upgrade()">♛ Upgrade to VIP</button>
+        <span>◉</span><div class="avatar">A</div>
+      </div>
+    </header>
+
+    <section class="ticker">
+      <div class="ticker-card"><span>BTC/USDT</span><strong>$67,254.03</strong> <small class="up">▲ +1.82%</small></div>
+      <div class="ticker-card"><span>ETH/USDT</span><strong>$3,512.41</strong> <small class="up">▲ +2.35%</small></div>
+      <div class="ticker-card"><span>SOL/USDT</span><strong>$175.32</strong> <small class="down">▼ -0.71%</small></div>
+      <div class="ticker-card"><span>TOTAL MKT CAP</span><strong>$2.48T</strong> <small class="up">▲ +1.21%</small></div>
+      <div class="ticker-card"><span>BTC DOMINANCE</span><strong>53.46%</strong> <small class="down">▼ -0.35%</small></div>
+      <div class="ticker-card"><span>FEAR & GREED</span><strong class="up">72</strong></div>
+    </section>
+
+    <div class="content">
+      <div class="dashboard-grid">
+        <section class="card chart-card">
+          <div class="asset-head">
+            <div>
+              <div class="asset-title">
+                <div class="coin">₿</div>
+                <div><h1>BTC/USDT</h1><p>Bitcoin / TetherUS</p></div>
+              </div>
+              <div class="price">$67,254.03 <span class="up" style="font-size:13px">+1.82% (24h)</span></div>
+            </div>
+            <div class="stats">
+              <div class="stat"><span>High</span><strong>$67,890.00</strong></div>
+              <div class="stat"><span>Low</span><strong>$65,432.10</strong></div>
+              <div class="stat"><span>24h Volume</span><strong>$28.41B</strong></div>
+              <div class="stat"><span>Market Cap</span><strong>$1.32T</strong></div>
+            </div>
+          </div>
+
+          <div class="timeframes">
+            <button>1m</button><button>5m</button><button>15m</button><button>1h</button><button>4h</button><button class="active">1D</button><button>1W</button>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="grid-lines"></div>
+            <canvas id="chart"></canvas>
+          </div>
+
+          <div class="indicator-bar">
+            <div class="indicator"><span>RSI (14)</span><strong>62.45</strong><small>Neutral</small></div>
+            <div class="indicator"><span>MACD (12,26,9)</span><strong>512.36</strong><small class="up">Bullish</small></div>
+            <div class="indicator"><span>Stochastic</span><strong>71.23</strong><small class="up">Bullish</small></div>
+            <div class="indicator"><span>EMA 20/50/200</span><strong class="up">Bullish</strong><small>Trend</small></div>
+          </div>
+        </section>
+
+        <aside class="card ai-card">
+          <div class="card-title">AI Market Probability <span class="subtle">Last updated: 2 min ago</span></div>
+          <div class="gauge">
+            <div class="gauge-ring"></div>
+            <div class="gauge-text"><strong>67%</strong><p>Bullish</p></div>
+          </div>
+          <div class="prob-row">
+            <div><strong class="up">67%</strong><p>Bullish</p></div>
+            <div><strong style="color:var(--purple)">33%</strong><p>Bearish</p></div>
+          </div>
+          <div class="breakdown">
+            <div class="break-row"><span>Trend</span><span class="up">Bullish</span><span class="up">+18</span></div>
+            <div class="break-row"><span>Momentum</span><span class="up">Bullish</span><span class="up">+12</span></div>
+            <div class="break-row"><span>Volume</span><span>Neutral</span><span>+2</span></div>
+            <div class="break-row"><span>Funding Rate</span><span class="down">Bearish</span><span class="down">-7</span></div>
+            <div class="break-row"><span>Open Interest</span><span class="up">Bullish</span><span class="up">+9</span></div>
+            <div class="break-row"><span>Market Sentiment</span><span class="up">Bullish</span><span class="up">+11</span></div>
+            <div class="break-row"><span>BTC Dominance</span><span>Neutral</span><span>0</span></div>
+          </div>
+          <div class="score"><span>Composite Score</span><strong>+45</strong></div>
+        </aside>
+      </div>
+
+      <div class="bottom-grid">
+        <section class="card section-card">
+          <div class="card-title">My Portfolio <span class="subtle">Total Value&nbsp; <b style="color:white">$29,542.21</b></span></div>
+          <table>
+            <thead><tr><th>Asset</th><th>Amount</th><th>Avg Price</th><th>Current</th><th>P&L</th></tr></thead>
+            <tbody>
+              <tr><td><span class="asset-dot">₿</span>BTC</td><td>0.2415</td><td>$62,182</td><td>$67,254</td><td class="up">+$1,224</td></tr>
+              <tr><td><span class="asset-dot">Ξ</span>ETH</td><td>1.2500</td><td>$3,102</td><td>$3,512</td><td class="up">+$512</td></tr>
+              <tr><td><span class="asset-dot">S</span>SOL</td><td>10.000</td><td>$142.30</td><td>$175.32</td><td class="up">+$330</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card section-card">
+          <div class="card-title">Recent AI Signals <span class="subtle">View All</span></div>
+          <div class="signal"><b>₿ BTC/USDT</b><span class="tag">Long</span><strong class="up">67%</strong></div>
+          <div class="signal"><b>Ξ ETH/USDT</b><span class="tag">Long</span><strong class="up">64%</strong></div>
+          <div class="signal"><b>S SOL/USDT</b><span class="tag" style="color:var(--red);background:#2b1017">Short</span><strong class="up">58%</strong></div>
+        </section>
+
+        <section class="card section-card">
+          <div class="card-title">News <span class="subtle">View All</span></div>
+          <div class="news-item">Bitcoin ETF inflows continue for 7th consecutive day<small>2 min ago</small></div>
+          <div class="news-item">Ethereum network activity reaches new high in 2024<small>25 min ago</small></div>
+          <div class="news-item">Fed signals potential rate cut in September<small>1 hour ago</small></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Demo candlestick chart — replace with real market data later.
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    drawChart(rect.width, rect.height);
+  }
+
+  function drawChart(w,h){
+    ctx.clearRect(0,0,w,h);
+
+    const points = [];
+    let value = h * .62;
+    for(let i=0;i<74;i++){
+      value += (Math.random()-.45)*18;
+      value = Math.max(h*.16, Math.min(h*.72,value));
+      points.push(value);
+    }
+
+    const step = w / points.length;
+    const candleW = Math.max(3, step*.52);
+
+    // Moving average
+    ctx.beginPath();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "#d8a63a";
+    points.forEach((p,i)=>{
+      const y = p - 35;
+      if(i===0) ctx.moveTo(i*step,y); else ctx.lineTo(i*step,y);
+    });
+    ctx.stroke();
+
+    // Candles
+    points.forEach((y,i)=>{
+      const x=i*step + step/2;
+      const open = y + (Math.random()-.5)*14;
+      const close = y + (Math.random()-.5)*14;
+      const high = Math.min(open,close)-Math.random()*13-4;
+      const low = Math.max(open,close)+Math.random()*13+4;
+      const bullish = close < open;
+
+      ctx.strokeStyle = bullish ? "#00d69a" : "#ff5266";
+      ctx.fillStyle = bullish ? "#00b982" : "#ff5266";
+      ctx.beginPath(); ctx.moveTo(x,high); ctx.lineTo(x,low); ctx.stroke();
+      ctx.fillRect(x-candleW/2,Math.min(open,close),candleW,Math.max(2,Math.abs(close-open)));
+    });
+
+    // Volume
+    for(let i=0;i<points.length;i++){
+      const x=i*step+step/2;
+      const vol=10+Math.random()*27;
+      ctx.fillStyle=i%5===0?"#8f454b":"#146a5c";
+      ctx.fillRect(x-candleW/2,h-vol,candleW,vol);
+    }
+  }
+
+  window.addEventListener("resize",resizeCanvas);
+  resizeCanvas();
+
+  // Navigation demo
+  document.querySelectorAll(".nav button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      alert(btn.dataset.page + " page will be connected in the next development step.");
+    });
+  });
+
+  function upgrade(){
+    alert("VIP checkout will be connected after the membership system is added.");
+  }
+</script>
+</body>
+</html>
