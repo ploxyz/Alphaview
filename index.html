@@ -395,6 +395,727 @@
   function upgrade(){
     alert("VIP checkout will be connected after the membership system is added.");
   }
+<script>
+  // =========================================================
+  // ALPHAVIEW PHASE 2
+  // Binance public market data
+  // =========================================================
+
+  const BINANCE_API = "https://api.binance.com/api/v3";
+
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+
+  let currentInterval = "1d";
+  let currentCandles = [];
+
+  const intervalMap = {
+    "1m": "1m",
+    "5m": "5m",
+    "15m": "15m",
+    "1h": "1h",
+    "4h": "4h",
+    "1D": "1d",
+    "1W": "1w"
+  };
+
+  // ---------------------------------------------------------
+  // Canvas
+  // ---------------------------------------------------------
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (currentCandles.length) {
+      drawChart(currentCandles, rect.width, rect.height);
+    }
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+
+
+  // ---------------------------------------------------------
+  // Binance Klines
+  // ---------------------------------------------------------
+
+  async function fetchKlines(interval = "1d") {
+    const url =
+      `${BINANCE_API}/klines?symbol=BTCUSDT&interval=${interval}&limit=120`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Binance API request failed");
+    }
+
+    const data = await response.json();
+
+    return data.map(k => ({
+      time: k[0],
+      open: Number(k[1]),
+      high: Number(k[2]),
+      low: Number(k[3]),
+      close: Number(k[4]),
+      volume: Number(k[5])
+    }));
+  }
+
+
+  // ---------------------------------------------------------
+  // BTC 24h ticker
+  // ---------------------------------------------------------
+
+  async function fetchTicker() {
+    const response = await fetch(
+      `${BINANCE_API}/ticker/24hr?symbol=BTCUSDT`
+    );
+
+    if (!response.ok) {
+      throw new Error("Ticker request failed");
+    }
+
+    return await response.json();
+  }
+
+
+  // ---------------------------------------------------------
+  // Format
+  // ---------------------------------------------------------
+
+  function money(value) {
+    return "$" + Number(value).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function compactMoney(value) {
+    const n = Number(value);
+
+    if (n >= 1e9) return "$" + (n / 1e9).toFixed(2) + "B";
+    if (n >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+
+    return money(n);
+  }
+
+
+  // ---------------------------------------------------------
+  // Update BTC information
+  // ---------------------------------------------------------
+
+  function updateBTCInfo(ticker, candles) {
+    const price = Number(ticker.lastPrice);
+    const change = Number(ticker.priceChangePercent);
+
+    const priceElement = document.querySelector(".price");
+
+    if (priceElement) {
+      priceElement.innerHTML = `
+        ${money(price)}
+        <span
+          class="${change >= 0 ? "up" : "down"}"
+          style="font-size:13px"
+        >
+          ${change >= 0 ? "+" : ""}${change.toFixed(2)}% (24h)
+        </span>
+      `;
+    }
+
+    // High / Low / Volume
+    const statValues = document.querySelectorAll(".stat strong");
+
+    if (statValues.length >= 4) {
+      statValues[0].textContent = money(ticker.highPrice);
+      statValues[1].textContent = money(ticker.lowPrice);
+      statValues[2].textContent =
+        compactMoney(Number(ticker.quoteVolume));
+
+      // Approximate BTC market cap
+      statValues[3].textContent = "Live";
+    }
+
+    // BTC ticker card
+    const tickerCards = document.querySelectorAll(".ticker-card");
+
+    if (tickerCards.length > 0) {
+      const btcCard = tickerCards[0];
+
+      const strong = btcCard.querySelector("strong");
+      const small = btcCard.querySelector("small");
+
+      if (strong) {
+        strong.textContent = money(price);
+      }
+
+      if (small) {
+        small.textContent =
+          `${change >= 0 ? "▲ +" : "▼ "}${change.toFixed(2)}%`;
+
+        small.className = change >= 0 ? "up" : "down";
+      }
+    }
+  }
+
+
+  // ---------------------------------------------------------
+  // EMA
+  // ---------------------------------------------------------
+
+  function calculateEMA(values, period) {
+    if (values.length < period) return null;
+
+    const multiplier = 2 / (period + 1);
+
+    let ema = values
+      .slice(0, period)
+      .reduce((a, b) => a + b, 0) / period;
+
+    for (let i = period; i < values.length; i++) {
+      ema =
+        (values[i] - ema) * multiplier + ema;
+    }
+
+    return ema;
+  }
+
+
+  // ---------------------------------------------------------
+  // RSI
+  // ---------------------------------------------------------
+
+  function calculateRSI(closes, period = 14) {
+    if (closes.length <= period) return 50;
+
+    let gains = 0;
+    let losses = 0;
+
+    for (let i = 1; i <= period; i++) {
+      const change = closes[i] - closes[i - 1];
+
+      if (change >= 0) gains += change;
+      else losses += Math.abs(change);
+    }
+
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+
+    for (let i = period + 1; i < closes.length; i++) {
+      const change = closes[i] - closes[i - 1];
+
+      const gain = Math.max(change, 0);
+      const loss = Math.max(-change, 0);
+
+      avgGain =
+        (avgGain * (period - 1) + gain) / period;
+
+      avgLoss =
+        (avgLoss * (period - 1) + loss) / period;
+    }
+
+    if (avgLoss === 0) return 100;
+
+    const rs = avgGain / avgLoss;
+
+    return 100 - 100 / (1 + rs);
+  }
+
+
+  // ---------------------------------------------------------
+  // Stochastic
+  // ---------------------------------------------------------
+
+  function calculateStochastic(candles, period = 14) {
+    if (candles.length < period) return 50;
+
+    const recent = candles.slice(-period);
+
+    const highest = Math.max(
+      ...recent.map(c => c.high)
+    );
+
+    const lowest = Math.min(
+      ...recent.map(c => c.low)
+    );
+
+    const close = recent[recent.length - 1].close;
+
+    if (highest === lowest) return 50;
+
+    return ((close - lowest) / (highest - lowest)) * 100;
+  }
+
+
+  // ---------------------------------------------------------
+  // MACD
+  // ---------------------------------------------------------
+
+  function calculateMACD(closes) {
+    const ema12 = calculateEMA(closes, 12);
+    const ema26 = calculateEMA(closes, 26);
+
+    if (ema12 === null || ema26 === null) {
+      return 0;
+    }
+
+    return ema12 - ema26;
+  }
+
+
+  // ---------------------------------------------------------
+  // Update indicators
+  // ---------------------------------------------------------
+
+  function updateIndicators(candles) {
+    const closes = candles.map(c => c.close);
+
+    const rsi = calculateRSI(closes, 14);
+    const stochastic = calculateStochastic(candles, 14);
+
+    const ema20 = calculateEMA(closes, 20);
+    const ema50 = calculateEMA(closes, 50);
+    const ema200 = calculateEMA(closes, 200);
+
+    const macd = calculateMACD(closes);
+
+    const indicatorElements =
+      document.querySelectorAll(".indicator");
+
+    if (indicatorElements.length >= 4) {
+
+      // RSI
+      indicatorElements[0]
+        .querySelector("strong")
+        .textContent = rsi.toFixed(2);
+
+      indicatorElements[0]
+        .querySelector("small")
+        .textContent =
+        rsi >= 70 ? "Overbought" :
+        rsi <= 30 ? "Oversold" :
+        "Neutral";
+
+      // MACD
+      indicatorElements[1]
+        .querySelector("strong")
+        .textContent = macd.toFixed(2);
+
+      indicatorElements[1]
+        .querySelector("small")
+        .textContent =
+        macd >= 0 ? "Bullish" : "Bearish";
+
+      indicatorElements[1]
+        .querySelector("small")
+        .className =
+        macd >= 0 ? "up" : "down";
+
+      // Stochastic
+      indicatorElements[2]
+        .querySelector("strong")
+        .textContent =
+        stochastic.toFixed(2);
+
+      indicatorElements[2]
+        .querySelector("small")
+        .textContent =
+        stochastic >= 80 ? "Overbought" :
+        stochastic <= 20 ? "Oversold" :
+        "Neutral";
+
+      // EMA trend
+      const current =
+        closes[closes.length - 1];
+
+      let trend = "Neutral";
+
+      if (ema20 && ema50) {
+        if (
+          current > ema20 &&
+          ema20 > ema50
+        ) {
+          trend = "Bullish";
+        }
+        else if (
+          current < ema20 &&
+          ema20 < ema50
+        ) {
+          trend = "Bearish";
+        }
+      }
+
+      indicatorElements[3]
+        .querySelector("strong")
+        .textContent = trend;
+
+      indicatorElements[3]
+        .querySelector("strong")
+        .className =
+        trend === "Bullish"
+          ? "up"
+          : trend === "Bearish"
+          ? "down"
+          : "";
+    }
+  }
+
+
+  // ---------------------------------------------------------
+  // Real Candlestick Chart
+  // ---------------------------------------------------------
+
+  function drawChart(candles, w, h) {
+    ctx.clearRect(0, 0, w, h);
+
+    if (!candles.length) return;
+
+    const paddingTop = 15;
+    const paddingBottom = 55;
+
+    const chartHeight =
+      h - paddingTop - paddingBottom;
+
+    const highs = candles.map(c => c.high);
+    const lows = candles.map(c => c.low);
+
+    const maxPrice = Math.max(...highs);
+    const minPrice = Math.min(...lows);
+
+    const range = maxPrice - minPrice || 1;
+
+    const step = w / candles.length;
+
+    const candleWidth =
+      Math.max(2, step * 0.55);
+
+    function priceToY(price) {
+      return (
+        paddingTop +
+        ((maxPrice - price) / range) *
+        chartHeight
+      );
+    }
+
+    // Price labels
+    ctx.fillStyle = "#7f8ba3";
+    ctx.font = "10px Arial";
+    ctx.textAlign = "right";
+
+    for (let i = 0; i < 5; i++) {
+      const price =
+        maxPrice -
+        (range / 4) * i;
+
+      const y =
+        paddingTop +
+        (chartHeight / 4) * i;
+
+      ctx.fillText(
+        money(price),
+        w - 5,
+        y + 3
+      );
+    }
+
+    // Candles
+    candles.forEach((candle, i) => {
+
+      const x =
+        i * step + step / 2;
+
+      const openY =
+        priceToY(candle.open);
+
+      const closeY =
+        priceToY(candle.close);
+
+      const highY =
+        priceToY(candle.high);
+
+      const lowY =
+        priceToY(candle.low);
+
+      const bullish =
+        candle.close >= candle.open;
+
+      ctx.strokeStyle =
+        bullish
+          ? "#00d69a"
+          : "#ff5266";
+
+      ctx.fillStyle =
+        bullish
+          ? "#00b982"
+          : "#ff5266";
+
+      // Wick
+      ctx.beginPath();
+
+      ctx.moveTo(x, highY);
+      ctx.lineTo(x, lowY);
+
+      ctx.stroke();
+
+      // Body
+      const bodyTop =
+        Math.min(openY, closeY);
+
+      const bodyHeight =
+        Math.max(
+          1,
+          Math.abs(openY - closeY)
+        );
+
+      ctx.fillRect(
+        x - candleWidth / 2,
+        bodyTop,
+        candleWidth,
+        bodyHeight
+      );
+    });
+
+    // 20 EMA line
+    const closes =
+      candles.map(c => c.close);
+
+    const period = 20;
+
+    if (closes.length >= period) {
+
+      const multiplier =
+        2 / (period + 1);
+
+      let ema =
+        closes
+          .slice(0, period)
+          .reduce((a, b) => a + b, 0)
+          / period;
+
+      ctx.beginPath();
+      ctx.strokeStyle = "#d8a63a";
+      ctx.lineWidth = 1.3;
+
+      for (let i = period - 1; i < closes.length; i++) {
+
+        if (i >= period) {
+          ema =
+            (closes[i] - ema) *
+            multiplier + ema;
+        }
+
+        const x =
+          i * step + step / 2;
+
+        const y =
+          priceToY(ema);
+
+        if (i === period - 1) {
+          ctx.moveTo(x, y);
+        }
+        else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
+    }
+
+    // Volume
+    const maxVolume =
+      Math.max(
+        ...candles.map(c => c.volume)
+      );
+
+    const volumeHeight = 45;
+
+    candles.forEach((candle, i) => {
+
+      const x =
+        i * step + step / 2;
+
+      const volume =
+        (candle.volume / maxVolume) *
+        volumeHeight;
+
+      ctx.fillStyle =
+        candle.close >= candle.open
+          ? "rgba(0,214,154,.35)"
+          : "rgba(255,82,102,.35)";
+
+      ctx.fillRect(
+        x - candleWidth / 2,
+        h - volume,
+        candleWidth,
+        volume
+      );
+    });
+  }
+
+
+  // ---------------------------------------------------------
+  // Load market
+  // ---------------------------------------------------------
+
+  async function loadMarket(interval) {
+
+    try {
+
+      currentCandles =
+        await fetchKlines(interval);
+
+      const ticker =
+        await fetchTicker();
+
+      updateBTCInfo(
+        ticker,
+        currentCandles
+      );
+
+      updateIndicators(
+        currentCandles
+      );
+
+      const rect =
+        canvas.getBoundingClientRect();
+
+      drawChart(
+        currentCandles,
+        rect.width,
+        rect.height
+      );
+
+    } catch (error) {
+
+      console.error(
+        "ALPHAVIEW market error:",
+        error
+      );
+
+      const price =
+        document.querySelector(".price");
+
+      if (price) {
+        price.insertAdjacentHTML(
+          "beforeend",
+          `<span class="down"
+             style="font-size:11px;margin-left:8px">
+             API Error
+           </span>`
+        );
+      }
+    }
+  }
+
+
+  // ---------------------------------------------------------
+  // Timeframe buttons
+  // ---------------------------------------------------------
+
+  document
+    .querySelectorAll(".timeframes button")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(
+              ".timeframes button"
+            )
+            .forEach(b =>
+              b.classList.remove("active")
+            );
+
+          button.classList.add("active");
+
+          const selected =
+            button.textContent.trim();
+
+          currentInterval =
+            intervalMap[selected];
+
+          loadMarket(
+            currentInterval
+          );
+        }
+      );
+    });
+
+
+  // ---------------------------------------------------------
+  // Navigation
+  // ---------------------------------------------------------
+
+  document
+    .querySelectorAll(".nav button")
+    .forEach(btn => {
+
+      btn.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(
+              ".nav button"
+            )
+            .forEach(x =>
+              x.classList.remove("active")
+            );
+
+          btn.classList.add("active");
+
+          alert(
+            btn.dataset.page +
+            " page will be connected in the next development step."
+          );
+        }
+      );
+    });
+
+
+  // ---------------------------------------------------------
+  // VIP
+  // ---------------------------------------------------------
+
+  function upgrade() {
+    alert(
+      "VIP checkout will be connected after the membership system is added."
+    );
+  }
+
+
+  // ---------------------------------------------------------
+  // Initial load
+  // ---------------------------------------------------------
+
+  resizeCanvas();
+
+  loadMarket("1d");
+
+  // Refresh BTC ticker every 10 seconds
+  setInterval(async () => {
+
+    try {
+
+      const ticker =
+        await fetchTicker();
+
+      updateBTCInfo(
+        ticker,
+        currentCandles
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
+
+  }, 10000);
 </script>
 </body>
 </html>
