@@ -1,9 +1,3 @@
- 
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,15 +15,18 @@
 .ticker-card[data-symbol]:hover {
   background:#111a2d;
 }
+
 .ticker-card[data-symbol].selected {
   background:#141b3d;
   box-shadow:inset 0 -2px 0 #657cff;
 }
+
 .chart-wrap {
   cursor:grab;
   user-select:none;
   touch-action:none;
 }
+
 .chart-wrap.dragging {
   cursor:grabbing;
 }
@@ -54,6 +51,7 @@
       color:var(--text);
       min-height:100vh;
     }
+
     button{font:inherit}
     .app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
 
@@ -149,6 +147,26 @@
     }
     canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;display:block}
     .chart-wrap.dragging canvas{cursor:grabbing}
+    .chart-history-controls{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-top:8px;
+      color:#7f8ba3;
+      font-size:11px;
+    }
+    .chart-history-controls button{
+      background:#101a2d;
+      border:1px solid #263754;
+      color:#dce6f5;
+      border-radius:6px;
+      padding:6px 10px;
+      cursor:pointer;
+    }
+    .chart-history-controls button:hover{
+      background:#17243b;
+    }
+
     .indicator-bar{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px;border:1px solid var(--border);border-radius:7px;overflow:hidden}
     .indicator{padding:13px;border-right:1px solid var(--border)}
     .indicator:last-child{border:0}
@@ -214,6 +232,7 @@
 
 <body>
 <div class="app">
+
   <aside class="sidebar">
     <div class="brand"><span class="logo"></span> ALPHAVIEW</div>
     <nav class="nav">
@@ -226,6 +245,7 @@
       <button data-page="Backtesting">◫ &nbsp; Backtesting</button>
       <button data-page="Settings">⚙ &nbsp; Settings</button>
     </nav>
+
     <div class="premium">
       <h3>Unlock Premium Features</h3>
       <p>Get advanced AI analysis, unlimited signals, and personalized insights.</p>
@@ -234,6 +254,7 @@
   </aside>
 
   <main class="main">
+
     <header class="topbar">
       <nav class="topnav">
         <button class="active">Dashboard</button>
@@ -243,72 +264,111 @@
         <button>Alerts</button>
         <button>News</button>
       </nav>
+
       <div class="top-actions">
         <button class="top-vip" onclick="upgrade()">♛ Upgrade to VIP</button>
-        <span>◉</span><div class="avatar">A</div>
+        <span>◉</span>
+        <div class="avatar">A</div>
       </div>
     </header>
 
-<section class="ticker">
+    <section class="ticker">
 
-  <div class="ticker-card selected" data-symbol="BTCUSDT">
-    <span>BTC/USDT</span>
-    <strong>Loading...</strong>
-    <small>--</small>
-  </div>
+      <div class="ticker-card selected" data-symbol="BTCUSDT">
+        <span>BTC/USDT</span>
+        <strong>Loading...</strong>
+        <small>--</small>
+      </div>
 
-  <div class="ticker-card" data-symbol="ETHUSDT">
-    <span>ETH/USDT</span>
-    <strong>Loading...</strong>
-    <small>--</small>
-  </div>
+      <div class="ticker-card" data-symbol="ETHUSDT">
+        <span>ETH/USDT</span>
+        <strong>Loading...</strong>
+        <small>--</small>
+      </div>
 
-  <div class="ticker-card" data-symbol="SOLUSDT">
-    <span>SOL/USDT</span>
-    <strong>Loading...</strong>
-    <small>--</small>
-  </div>
+      <div class="ticker-card" data-symbol="SOLUSDT">
+        <span>SOL/USDT</span>
+        <strong>Loading...</strong>
+        <small>--</small>
+      </div>
 
-  <div class="ticker-card">
-    <span>TOTAL MKT CAP</span>
-    <strong>$2.48T</strong>
-    <small class="up">▲ +1.21%</small>
-  </div>
+      <div class="ticker-card">
+        <span>TOTAL MKT CAP</span>
+        <strong>$2.48T</strong>
+        <small class="up">▲ +1.21%</small>
+      </div>
 
-  <div class="ticker-card">
-    <span>BTC DOMINANCE</span>
-    <strong>53.46%</strong>
-    <small>▼ -0.35%</small>
-  </div>
+      <div class="ticker-card">
+        <span>BTC DOMINANCE</span>
+        <strong>53.46%</strong>
+        <small>▼ -0.35%</small>
+      </div>
 
-  <div class="ticker-card">
-    <span>FEAR & GREED</span>
-    <strong class="up">72</strong>
-  </div>
+      <div class="ticker-card">
+        <span>FEAR & GREED</span>
+        <strong class="up">72</strong>
+      </div>
 
-</section>
+    </section>
 
     <div class="content">
+
       <div class="dashboard-grid">
+
         <section class="card chart-card">
+
           <div class="asset-head">
+
             <div>
               <div class="asset-title">
-           <div class="coin" id="coinIcon">₿</div>
-                <div>  <h1 id="assetName">BTC/USDT</h1> <p id="assetDescription">Bitcoin / TetherUS</p></div>
+                <div class="coin" id="coinIcon">₿</div>
+
+                <div>
+                  <h1 id="assetName">BTC/USDT</h1>
+                  <p id="assetDescription">Bitcoin / TetherUS</p>
+                </div>
               </div>
-              <div class="price">$67,254.03 <span class="up" style="font-size:13px">+1.82% (24h)</span></div>
+
+              <div class="price">
+                $67,254.03
+                <span class="up" style="font-size:13px">
+                  +1.82% (24h)
+                </span>
+              </div>
             </div>
+
             <div class="stats">
-              <div class="stat"><span>High</span><strong>$67,890.00</strong></div>
-              <div class="stat"><span>Low</span><strong>$65,432.10</strong></div>
-              <div class="stat"><span>24h Volume</span><strong>$28.41B</strong></div>
-              <div class="stat"><span>Market Cap</span><strong>$1.32T</strong></div>
+              <div class="stat">
+                <span>High</span>
+                <strong>$67,890.00</strong>
+              </div>
+
+              <div class="stat">
+                <span>Low</span>
+                <strong>$65,432.10</strong>
+              </div>
+
+              <div class="stat">
+                <span>24h Volume</span>
+                <strong>$28.41B</strong>
+              </div>
+
+              <div class="stat">
+                <span>Market Cap</span>
+                <strong>$1.32T</strong>
+              </div>
             </div>
+
           </div>
 
           <div class="timeframes">
-            <button>1m</button><button>5m</button><button>15m</button><button>1h</button><button>4h</button><button class="active">1D</button><button>1W</button>
+            <button>1m</button>
+            <button>5m</button>
+            <button>15m</button>
+            <button>1h</button>
+            <button>4h</button>
+            <button class="active">1D</button>
+            <button>1W</button>
           </div>
 
           <div class="chart-wrap">
@@ -316,73 +376,265 @@
             <canvas id="chart"></canvas>
           </div>
 
-          <div class="indicator-bar">
-            <div class="indicator"><span>RSI (14)</span><strong>62.45</strong><small>Neutral</small></div>
-            <div class="indicator"><span>MACD (12,26,9)</span><strong>512.36</strong><small class="up">Bullish</small></div>
-            <div class="indicator"><span>Stochastic</span><strong>71.23</strong><small class="up">Bullish</small></div>
-            <div class="indicator"><span>EMA 20/50/200</span><strong class="up">Bullish</strong><small>Trend</small></div>
+          <div class="chart-history-controls">
+            <button id="historyLeft" type="button">← Older</button>
+            <button id="historyRight" type="button">Newer →</button>
+            <span>
+              Drag the chart to browse older dates · Wheel to zoom
+            </span>
           </div>
+
+          <div class="indicator-bar">
+
+            <div class="indicator">
+              <span>RSI (14)</span>
+              <strong>62.45</strong>
+              <small>Neutral</small>
+            </div>
+
+            <div class="indicator">
+              <span>MACD (12,26,9)</span>
+              <strong>512.36</strong>
+              <small class="up">Bullish</small>
+            </div>
+
+            <div class="indicator">
+              <span>Stochastic</span>
+              <strong>71.23</strong>
+              <small class="up">Bullish</small>
+            </div>
+
+            <div class="indicator">
+              <span>EMA 20/50/200</span>
+              <strong class="up">Bullish</strong>
+              <small>Trend</small>
+            </div>
+
+          </div>
+
         </section>
 
         <aside class="card ai-card">
-          <div class="card-title">AI Market Probability <span class="subtle">Last updated: 2 min ago</span></div>
+
+          <div class="card-title">
+            AI Market Probability
+            <span class="subtle">Last updated: 2 min ago</span>
+          </div>
+
           <div class="gauge">
             <div class="gauge-ring"></div>
-            <div class="gauge-text"><strong>67%</strong><p>Bullish</p></div>
+            <div class="gauge-text">
+              <strong>67%</strong>
+              <p>Bullish</p>
+            </div>
           </div>
+
           <div class="prob-row">
-            <div><strong class="up">67%</strong><p>Bullish</p></div>
-            <div><strong style="color:var(--purple)">33%</strong><p>Bearish</p></div>
+            <div>
+              <strong class="up">67%</strong>
+              <p>Bullish</p>
+            </div>
+
+            <div>
+              <strong style="color:var(--purple)">33%</strong>
+              <p>Bearish</p>
+            </div>
           </div>
+
           <div class="breakdown">
-            <div class="break-row"><span>Trend</span><span class="up">Bullish</span><span class="up">+18</span></div>
-            <div class="break-row"><span>Momentum</span><span class="up">Bullish</span><span class="up">+12</span></div>
-            <div class="break-row"><span>Volume</span><span>Neutral</span><span>+2</span></div>
-            <div class="break-row"><span>Funding Rate</span><span class="down">Bearish</span><span class="down">-7</span></div>
-            <div class="break-row"><span>Open Interest</span><span class="up">Bullish</span><span class="up">+9</span></div>
-            <div class="break-row"><span>Market Sentiment</span><span class="up">Bullish</span><span class="up">+11</span></div>
-            <div class="break-row"><span>BTC Dominance</span><span>Neutral</span><span>0</span></div>
+
+            <div class="break-row">
+              <span>Trend</span>
+              <span class="up">Bullish</span>
+              <span class="up">+18</span>
+            </div>
+
+            <div class="break-row">
+              <span>Momentum</span>
+              <span class="up">Bullish</span>
+              <span class="up">+12</span>
+            </div>
+
+            <div class="break-row">
+              <span>Volume</span>
+              <span>Neutral</span>
+              <span>+2</span>
+            </div>
+
+            <div class="break-row">
+              <span>Funding Rate</span>
+              <span class="down">Bearish</span>
+              <span class="down">-7</span>
+            </div>
+
+            <div class="break-row">
+              <span>Open Interest</span>
+              <span class="up">Bullish</span>
+              <span class="up">+9</span>
+            </div>
+
+            <div class="break-row">
+              <span>Market Sentiment</span>
+              <span class="up">Bullish</span>
+              <span class="up">+11</span>
+            </div>
+
+            <div class="break-row">
+              <span>BTC Dominance</span>
+              <span>Neutral</span>
+              <span>0</span>
+            </div>
+
           </div>
-          <div class="score"><span>Composite Score</span><strong>+45</strong></div>
+
+          <div class="score">
+            <span>Composite Score</span>
+            <strong>+45</strong>
+          </div>
+
         </aside>
+
       </div>
 
       <div class="bottom-grid">
+
         <section class="card section-card">
-          <div class="card-title">My Portfolio <span class="subtle">Total Value&nbsp; <b style="color:white">$29,542.21</b></span></div>
+
+          <div class="card-title">
+            My Portfolio
+            <span class="subtle">
+              Total Value&nbsp;
+              <b style="color:white">$29,542.21</b>
+            </span>
+          </div>
+
           <table>
-            <thead><tr><th>Asset</th><th>Amount</th><th>Avg Price</th><th>Current</th><th>P&L</th></tr></thead>
+
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Amount</th>
+                <th>Avg Price</th>
+                <th>Current</th>
+                <th>P&L</th>
+              </tr>
+            </thead>
+
             <tbody>
-              <tr><td><span class="asset-dot">₿</span>BTC</td><td>0.2415</td><td>$62,182</td><td>$67,254</td><td class="up">+$1,224</td></tr>
-              <tr><td><span class="asset-dot">Ξ</span>ETH</td><td>1.2500</td><td>$3,102</td><td>$3,512</td><td class="up">+$512</td></tr>
-              <tr><td><span class="asset-dot">S</span>SOL</td><td>10.000</td><td>$142.30</td><td>$175.32</td><td class="up">+$330</td></tr>
+
+              <tr>
+                <td>
+                  <span class="asset-dot">₿</span>
+                  BTC
+                </td>
+                <td>0.2415</td>
+                <td>$62,182</td>
+                <td>$67,254</td>
+                <td class="up">+$1,224</td>
+              </tr>
+
+              <tr>
+                <td>
+                  <span class="asset-dot">Ξ</span>
+                  ETH
+                </td>
+                <td>1.2500</td>
+                <td>$3,102</td>
+                <td>$3,512</td>
+                <td class="up">+$512</td>
+              </tr>
+
+              <tr>
+                <td>
+                  <span class="asset-dot">S</span>
+                  SOL
+                </td>
+                <td>10.000</td>
+                <td>$142.30</td>
+                <td>$175.32</td>
+                <td class="up">+$330</td>
+              </tr>
+
             </tbody>
+
           </table>
+
         </section>
 
         <section class="card section-card">
-          <div class="card-title">Recent AI Signals <span class="subtle">View All</span></div>
-          <div class="signal"><b>₿ BTC/USDT</b><span class="tag">Long</span><strong class="up">67%</strong></div>
-          <div class="signal"><b>Ξ ETH/USDT</b><span class="tag">Long</span><strong class="up">64%</strong></div>
-          <div class="signal"><b>S SOL/USDT</b><span class="tag" style="color:var(--red);background:#2b1017">Short</span><strong class="up">58%</strong></div>
+
+          <div class="card-title">
+            Recent AI Signals
+            <span class="subtle">View All</span>
+          </div>
+
+          <div class="signal">
+            <b>₿ BTC/USDT</b>
+            <span class="tag">Long</span>
+            <strong class="up">67%</strong>
+          </div>
+
+          <div class="signal">
+            <b>Ξ ETH/USDT</b>
+            <span class="tag">Long</span>
+            <strong class="up">64%</strong>
+          </div>
+
+          <div class="signal">
+            <b>S SOL/USDT</b>
+            <span
+              class="tag"
+              style="color:var(--red);background:#2b1017"
+            >
+              Short
+            </span>
+            <strong class="up">58%</strong>
+          </div>
+
         </section>
 
         <section class="card section-card">
-          <div class="card-title">News <span class="subtle">View All</span></div>
-          <div class="news-item">Bitcoin ETF inflows continue for 7th consecutive day<small>2 min ago</small></div>
-          <div class="news-item">Ethereum network activity reaches new high in 2024<small>25 min ago</small></div>
-          <div class="news-item">Fed signals potential rate cut in September<small>1 hour ago</small></div>
+
+          <div class="card-title">
+            News
+            <span class="subtle">View All</span>
+          </div>
+
+          <div class="news-item">
+            Bitcoin ETF inflows continue for 7th consecutive day
+            <small>2 min ago</small>
+          </div>
+
+          <div class="news-item">
+            Ethereum network activity reaches new high in 2024
+            <small>25 min ago</small>
+          </div>
+
+          <div class="news-item">
+            Fed signals potential rate cut in September
+            <small>1 hour ago</small>
+          </div>
+
         </section>
+
       </div>
+
     </div>
+
   </main>
+
 </div>
-  <script>
 
-const BINANCE_API = "https://data-api.binance.vision/api/v3";
+<script>
 
-const canvas = document.getElementById("chart");
-const ctx = canvas.getContext("2d");
+const BINANCE_API =
+  "https://data-api.binance.vision/api/v3";
+
+const canvas =
+  document.getElementById("chart");
+
+const ctx =
+  canvas.getContext("2d");
 
 let currentInterval = "1d";
 let currentSymbol = "BTCUSDT";
@@ -392,6 +644,9 @@ let marketRequestId = 0;
 
 let chartOffset = 0;
 let chartZoom = 1;
+
+const INITIAL_VISIBLE_COUNT = 100;
+
 let isDraggingChart = false;
 let dragStartX = 0;
 let dragStartOffset = 0;
@@ -402,118 +657,373 @@ let dragStartOffset = 0;
 // ===============================
 
 function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
 
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+  const dpr =
+    window.devicePixelRatio || 1;
 
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const rect =
+    canvas.getBoundingClientRect();
+
+  canvas.width =
+    rect.width * dpr;
+
+  canvas.height =
+    rect.height * dpr;
+
+  ctx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
 
   if (currentCandles.length) {
-    drawChart(currentCandles, rect.width, rect.height);
+    drawChart(
+      currentCandles,
+      rect.width,
+      rect.height
+    );
   }
 }
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener(
+  "resize",
+  resizeCanvas
+);
+
 
 // ===============================
 // CHART INTERACTION
 // ===============================
 
 function redrawChart() {
-  const rect = canvas.getBoundingClientRect();
-  drawChart(currentCandles, rect.width, rect.height);
+
+  const rect =
+    canvas.getBoundingClientRect();
+
+  drawChart(
+    currentCandles,
+    rect.width,
+    rect.height
+  );
 }
 
 function startDrag(x) {
+
   isDraggingChart = true;
+
   dragStartX = x;
   dragStartOffset = chartOffset;
-  document.querySelector(".chart-wrap").classList.add("dragging");
+
+  document
+    .querySelector(".chart-wrap")
+    .classList.add("dragging");
 }
 
 function dragChart(x) {
-  if (!isDraggingChart || !currentCandles.length) return;
 
-  const rect = canvas.getBoundingClientRect();
-  const plotWidth = Math.max(1, rect.width - 82);
+  if (
+    !isDraggingChart ||
+    !currentCandles.length
+  ) return;
 
-  const visibleCount = Math.max(
-    25,
+  const rect =
+    canvas.getBoundingClientRect();
+
+  const plotWidth =
+    Math.max(
+      1,
+      rect.width - 82
+    );
+
+  const baseVisible =
     Math.min(
-      currentCandles.length,
-      Math.round(currentCandles.length / chartZoom)
-    )
-  );
+      INITIAL_VISIBLE_COUNT,
+      currentCandles.length
+    );
+
+  const visibleCount =
+    Math.max(
+      25,
+      Math.min(
+        currentCandles.length,
+        Math.round(
+          baseVisible / chartZoom
+        )
+      )
+    );
 
   chartOffset =
-    dragStartOffset - ((x - dragStartX) / plotWidth) * visibleCount;
+    dragStartOffset +
+    (
+      (dragStartX - x) /
+      plotWidth
+    ) *
+    visibleCount;
 
   redrawChart();
 }
 
 function stopDrag() {
+
   isDraggingChart = false;
-  document.querySelector(".chart-wrap").classList.remove("dragging");
+
+  document
+    .querySelector(".chart-wrap")
+    .classList.remove("dragging");
 }
 
-// Pointer events: drag the chart directly with mouse, touch, or pen.
-canvas.addEventListener("pointerdown", e => {
-  if (!currentCandles.length) return;
-  canvas.setPointerCapture?.(e.pointerId);
-  startDrag(e.clientX);
-});
 
-canvas.addEventListener("pointermove", e => {
-  if (!isDraggingChart) return;
-  dragChart(e.clientX);
-});
+// Pointer events
+canvas.addEventListener(
+  "pointerdown",
+  e => {
 
-canvas.addEventListener("pointerup", stopDrag);
-canvas.addEventListener("pointercancel", stopDrag);
-canvas.addEventListener("pointerleave", e => {
-  if (e.pointerType === "mouse" && isDraggingChart) stopDrag();
-});
+    if (!currentCandles.length)
+      return;
 
-canvas.addEventListener("wheel", e => {
-  e.preventDefault();
-  if (!currentCandles.length) return;
+    canvas.setPointerCapture?.(
+      e.pointerId
+    );
 
-  const oldZoom = chartZoom;
-  const rect = canvas.getBoundingClientRect();
-  const plotWidth = Math.max(1, rect.width - 82);
+    startDrag(e.clientX);
+  }
+);
 
-  // Keep the candle under the mouse in roughly the same position.
-  const mouseRatio = Math.max(
-    0,
-    Math.min(1, (e.clientX - rect.left) / plotWidth)
+canvas.addEventListener(
+  "pointermove",
+  e => {
+
+    if (!isDraggingChart)
+      return;
+
+    dragChart(e.clientX);
+  }
+);
+
+canvas.addEventListener(
+  "pointerup",
+  stopDrag
+);
+
+canvas.addEventListener(
+  "pointercancel",
+  stopDrag
+);
+
+canvas.addEventListener(
+  "pointerleave",
+  e => {
+
+    if (
+      e.pointerType === "mouse" &&
+      isDraggingChart
+    ) {
+      stopDrag();
+    }
+  }
+);
+
+
+// ===============================
+// WHEEL ZOOM
+// ===============================
+
+canvas.addEventListener(
+  "wheel",
+  e => {
+
+    e.preventDefault();
+
+    if (!currentCandles.length)
+      return;
+
+    const oldZoom =
+      chartZoom;
+
+    const rect =
+      canvas.getBoundingClientRect();
+
+    const plotWidth =
+      Math.max(
+        1,
+        rect.width - 82
+      );
+
+    const mouseRatio =
+      Math.max(
+        0,
+        Math.min(
+          1,
+          (
+            e.clientX -
+            rect.left
+          ) /
+          plotWidth
+        )
+      );
+
+    chartZoom =
+      Math.max(
+        0.5,
+        Math.min(
+          4,
+          chartZoom *
+          (
+            e.deltaY < 0
+              ? 1.12
+              : 0.89
+          )
+        )
+      );
+
+    const baseVisible =
+      Math.min(
+        INITIAL_VISIBLE_COUNT,
+        currentCandles.length
+      );
+
+    const oldVisible =
+      Math.max(
+        25,
+        Math.min(
+          currentCandles.length,
+          Math.round(
+            baseVisible /
+            oldZoom
+          )
+        )
+      );
+
+    const newVisible =
+      Math.max(
+        25,
+        Math.min(
+          currentCandles.length,
+          Math.round(
+            baseVisible /
+            chartZoom
+          )
+        )
+      );
+
+    chartOffset +=
+      (
+        oldVisible -
+        newVisible
+      ) *
+      mouseRatio;
+
+    redrawChart();
+
+  },
+  { passive:false }
+);
+
+
+// ===============================
+// HISTORY NAVIGATION
+// ===============================
+
+const historyLeft =
+  document.getElementById(
+    "historyLeft"
   );
 
-  chartZoom = Math.max(
-    0.5,
-    Math.min(4, chartZoom * (e.deltaY < 0 ? 1.12 : 0.89))
+const historyRight =
+  document.getElementById(
+    "historyRight"
   );
 
-  const oldVisible = Math.max(
-    25,
-    Math.min(
-      currentCandles.length,
-      Math.round(currentCandles.length / oldZoom)
-    )
-  );
+historyLeft?.addEventListener(
+  "click",
+  () => {
 
-  const newVisible = Math.max(
-    25,
-    Math.min(
-      currentCandles.length,
-      Math.round(currentCandles.length / chartZoom)
-    )
-  );
+    if (!currentCandles.length)
+      return;
 
-  chartOffset += (oldVisible - newVisible) * mouseRatio;
-  redrawChart();
-}, { passive: false });
+    const baseVisible =
+      Math.min(
+        INITIAL_VISIBLE_COUNT,
+        currentCandles.length
+      );
+
+    const visibleCount =
+      Math.max(
+        25,
+        Math.min(
+          currentCandles.length,
+          Math.round(
+            baseVisible /
+            chartZoom
+          )
+        )
+      );
+
+    chartOffset =
+      Math.min(
+        Math.max(
+          0,
+          currentCandles.length -
+          visibleCount
+        ),
+        chartOffset +
+        Math.max(
+          10,
+          Math.floor(
+            visibleCount *
+            0.75
+          )
+        )
+      );
+
+    redrawChart();
+  }
+);
+
+historyRight?.addEventListener(
+  "click",
+  () => {
+
+    if (!currentCandles.length)
+      return;
+
+    const baseVisible =
+      Math.min(
+        INITIAL_VISIBLE_COUNT,
+        currentCandles.length
+      );
+
+    const visibleCount =
+      Math.max(
+        25,
+        Math.min(
+          currentCandles.length,
+          Math.round(
+            baseVisible /
+            chartZoom
+          )
+        )
+      );
+
+    chartOffset =
+      Math.max(
+        0,
+        chartOffset -
+        Math.max(
+          10,
+          Math.floor(
+            visibleCount *
+            0.75
+          )
+        )
+      );
+
+    redrawChart();
+  }
+);
 
 
 // ===============================
@@ -521,10 +1031,15 @@ canvas.addEventListener("wheel", e => {
 // ===============================
 
 function money(value) {
-  return "$" + Number(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+
+  return "$" +
+    Number(value).toLocaleString(
+      "en-US",
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    );
 }
 
 
@@ -532,44 +1047,110 @@ function money(value) {
 // BINANCE KLINES
 // ===============================
 
-async function fetchKlines(interval, symbol= currentSymbol) {
+async function fetchKlines(
+  interval,
+  symbol = currentSymbol
+) {
 
   const url =
-    `${BINANCE_API}/klines?symbol=${symbol}&interval=${interval}&limit=120`;
+    `${BINANCE_API}/klines?symbol=${symbol}&interval=${interval}&limit=1000`;
 
-  const response = await fetch(url);
+  const response =
+    await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Binance Kline API error");
+    throw new Error(
+      "Binance Kline API error"
+    );
   }
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
-  return data.map(k => ({
-    time: k[0],
-    open: Number(k[1]),
-    high: Number(k[2]),
-    low: Number(k[3]),
-    close: Number(k[4]),
-    volume: Number(k[5])
-  }));
+  return data.map(
+    k => ({
+      time:k[0],
+      open:Number(k[1]),
+      high:Number(k[2]),
+      low:Number(k[3]),
+      close:Number(k[4]),
+      volume:Number(k[5])
+    })
+  );
 }
 
 
-// Local fallback only used when the market API is unreachable.
-// Real Binance candles are still used whenever the API responds normally.
-function createFallbackCandles(basePrice = 67000) {
-  const candles = [];
-  let price = basePrice;
-  const now = Date.now();
+// ===============================
+// FALLBACK CANDLES
+// ===============================
 
-  for (let i = 119; i >= 0; i--) {
-    const time = now - i * 24 * 60 * 60 * 1000;
-    const drift = (Math.random() - 0.47) * 0.035;
-    const open = price;
-    const close = Math.max(1, open * (1 + drift));
-    const high = Math.max(open, close) * (1 + Math.random() * 0.012);
-    const low = Math.min(open, close) * (1 - Math.random() * 0.012);
+function createFallbackCandles(
+  basePrice = 67000
+) {
+
+  const candles = [];
+
+  let price =
+    basePrice;
+
+  const now =
+    Date.now();
+
+  for (
+    let i = 999;
+    i >= 0;
+    i--
+  ) {
+
+    const time =
+      now -
+      i *
+      24 *
+      60 *
+      60 *
+      1000;
+
+    const drift =
+      (
+        Math.random() -
+        0.47
+      ) *
+      0.035;
+
+    const open =
+      price;
+
+    const close =
+      Math.max(
+        1,
+        open *
+        (
+          1 +
+          drift
+        )
+      );
+
+    const high =
+      Math.max(
+        open,
+        close
+      ) *
+      (
+        1 +
+        Math.random() *
+        0.012
+      );
+
+    const low =
+      Math.min(
+        open,
+        close
+      ) *
+      (
+        1 -
+        Math.random() *
+        0.012
+      );
 
     candles.push({
       time,
@@ -577,23 +1158,35 @@ function createFallbackCandles(basePrice = 67000) {
       high,
       low,
       close,
-      volume: 500 + Math.random() * 2500
+      volume:
+        500 +
+        Math.random() *
+        2500
     });
 
-    price = close;
+    price =
+      close;
   }
 
   return candles;
 }
 
+
+// ===============================
+// TICKER CARDS
+// ===============================
+
 async function updateTickerCards() {
 
   const cards =
-    document.querySelectorAll(".ticker-card[data-symbol]");
+    document.querySelectorAll(
+      ".ticker-card[data-symbol]"
+    );
 
   for (const card of cards) {
 
-    const symbol = card.dataset.symbol;
+    const symbol =
+      card.dataset.symbol;
 
     try {
 
@@ -601,16 +1194,24 @@ async function updateTickerCards() {
         await fetchTicker(symbol);
 
       const price =
-        Number(ticker.lastPrice);
+        Number(
+          ticker.lastPrice
+        );
 
       const change =
-        Number(ticker.priceChangePercent);
+        Number(
+          ticker.priceChangePercent
+        );
 
-      card.querySelector("strong").textContent =
+      card
+        .querySelector("strong")
+        .textContent =
         money(price);
 
       const small =
-        card.querySelector("small");
+        card.querySelector(
+          "small"
+        );
 
       small.textContent =
         change >= 0
@@ -618,7 +1219,9 @@ async function updateTickerCards() {
           : `▼ ${change.toFixed(2)}%`;
 
       small.className =
-        change >= 0 ? "up" : "down";
+        change >= 0
+          ? "up"
+          : "down";
 
     } catch(error) {
 
@@ -632,33 +1235,52 @@ async function updateTickerCards() {
 
 
 // ===============================
-// BTC TICKER
+// TICKER
 // ===============================
 
-async function fetchTicker(symbol = currentSymbol) {
+async function fetchTicker(
+  symbol = currentSymbol
+) {
 
-  const response = await fetch(
-    `${BINANCE_API}/ticker/24hr?symbol=${symbol}`
-  );
+  const response =
+    await fetch(
+      `${BINANCE_API}/ticker/24hr?symbol=${symbol}`
+    );
 
   if (!response.ok) {
-    throw new Error("Ticker API error");
+
+    throw new Error(
+      "Ticker API error"
+    );
   }
 
   return await response.json();
 }
 
+
 // ===============================
 // UPDATE PRICE
 // ===============================
 
-function updateBTCInfo(ticker, symbol = currentSymbol) {
+function updateBTCInfo(
+  ticker,
+  symbol = currentSymbol
+) {
 
-  const price = Number(ticker.lastPrice);
-  const change = Number(ticker.priceChangePercent);
+  const price =
+    Number(
+      ticker.lastPrice
+    );
+
+  const change =
+    Number(
+      ticker.priceChangePercent
+    );
 
   const priceElement =
-    document.querySelector(".price");
+    document.querySelector(
+      ".price"
+    );
 
   if (priceElement) {
 
@@ -676,259 +1298,674 @@ function updateBTCInfo(ticker, symbol = currentSymbol) {
   }
 
   const statValues =
-    document.querySelectorAll(".stat strong");
+    document.querySelectorAll(
+      ".stat strong"
+    );
 
   if (statValues.length >= 3) {
 
     statValues[0].textContent =
-      money(ticker.highPrice);
+      money(
+        ticker.highPrice
+      );
 
     statValues[1].textContent =
-      money(ticker.lowPrice);
+      money(
+        ticker.lowPrice
+      );
 
     statValues[2].textContent =
       "$" +
-      (Number(ticker.quoteVolume) / 1e9).toFixed(2) +
+      (
+        Number(
+          ticker.quoteVolume
+        ) /
+        1e9
+      ).toFixed(2) +
       "B";
   }
 
+  const selectedCard =
+    document.querySelector(
+      `.ticker-card[data-symbol="${symbol}"]`
+    );
 
-  // BTC ticker
+  if (selectedCard) {
 
- const selectedCard =
-  document.querySelector(
-    `.ticker-card[data-symbol="${symbol}"]`
-  );
+    const strong =
+      selectedCard.querySelector(
+        "strong"
+      );
 
-if (selectedCard) {
+    const small =
+      selectedCard.querySelector(
+        "small"
+      );
 
-  const strong =
-    selectedCard.querySelector("strong");
+    if (strong) {
+      strong.textContent =
+        money(price);
+    }
 
-  const small =
-    selectedCard.querySelector("small");
+    if (small) {
 
-  if (strong) {
-    strong.textContent = money(price);
+      small.textContent =
+        change >= 0
+          ? `▲ +${change.toFixed(2)}%`
+          : `▼ ${change.toFixed(2)}%`;
+
+      small.className =
+        change >= 0
+          ? "up"
+          : "down";
+    }
   }
-
-  if (small) {
-
-    small.textContent =
-      change >= 0
-        ? `▲ +${change.toFixed(2)}%`
-        : `▼ ${change.toFixed(2)}%`;
-
-    small.className =
-      change >= 0 ? "up" : "down";
-  }
-} 
 }
+
+
 // ===============================
 // ASSET INFO
 // ===============================
 
 function setAssetInfo(symbol) {
+
   const info = {
-    BTCUSDT: { name: "BTC/USDT", description: "Bitcoin / TetherUS", icon: "₿" },
-    ETHUSDT: { name: "ETH/USDT", description: "Ethereum / TetherUS", icon: "Ξ" },
-    SOLUSDT: { name: "SOL/USDT", description: "Solana / TetherUS", icon: "S" }
-  };
 
-  const asset = info[symbol] || info.BTCUSDT;
-  const name = document.getElementById("assetName");
-  const description = document.getElementById("assetDescription");
-  const icon = document.getElementById("coinIcon");
+    BTCUSDT:{
+      name:"BTC/USDT",
+      description:"Bitcoin / TetherUS",
+      icon:"₿"
+    },
 
-  if (name) name.textContent = asset.name;
-  if (description) description.textContent = asset.description;
-  if (icon) icon.textContent = asset.icon;
-}
+    ETHUSDT:{
+      name:"ETH/USDT",
+      description:"Ethereum / TetherUS",
+      icon:"Ξ"
+    },
 
-// ===============================
-// DRAW REAL CANDLES
-// ===============================
-
-function drawChart(candles, w, h) {
-  ctx.clearRect(0, 0, w, h);
-  if (!candles.length) return;
-
-  const paddingTop = 15;
-  const paddingBottom = 62;   // extra room for volume + date axis
-  const priceAxisWidth = 82;
-  const plotWidth = Math.max(1, w - priceAxisWidth);
-  const chartHeight = h - paddingTop - paddingBottom;
-
-  const visibleCount = Math.max(
-    25,
-    Math.min(candles.length, Math.round(candles.length / chartZoom))
-  );
-
-  const maxOffset = Math.max(0, candles.length - visibleCount);
-  chartOffset = Math.max(0, Math.min(maxOffset, chartOffset));
-
-  const startIndex = Math.floor(chartOffset);
-  const visible = candles.slice(startIndex, startIndex + visibleCount);
-
-  const maxPrice = Math.max(...visible.map(c => c.high));
-  const minPrice = Math.min(...visible.map(c => c.low));
-  const range = maxPrice - minPrice || 1;
-
-  const step = plotWidth / Math.max(1, visible.length);
-  const candleWidth = Math.max(2, Math.min(18, step * 0.55));
-
-  function priceToY(price) {
-    return paddingTop + ((maxPrice - price) / range) * chartHeight;
-  }
-
-  // Price-axis area.
-  ctx.fillStyle = "#0a1220";
-  ctx.fillRect(plotWidth, 0, priceAxisWidth, h);
-
-  ctx.strokeStyle = "rgba(77,101,135,.28)";
-  ctx.beginPath();
-  ctx.moveTo(plotWidth, 0);
-  ctx.lineTo(plotWidth, h);
-  ctx.stroke();
-
-  // Horizontal price grid + labels.
-  ctx.fillStyle = "#7f8ba3";
-  ctx.font = "10px Arial";
-  ctx.textAlign = "right";
-
-  for (let i = 0; i < 5; i++) {
-    const price = maxPrice - (range / 4) * i;
-    const y = paddingTop + (chartHeight / 4) * i;
-
-    ctx.strokeStyle = "rgba(77,101,135,.14)";
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(plotWidth, y);
-    ctx.stroke();
-
-    ctx.fillStyle = "#7f8ba3";
-    ctx.fillText(money(price), w - 7, y + 3);
-  }
-
-  // Candles.
-  visible.forEach((candle, i) => {
-    const x = i * step + step / 2;
-    const openY = priceToY(candle.open);
-    const closeY = priceToY(candle.close);
-    const highY = priceToY(candle.high);
-    const lowY = priceToY(candle.low);
-    const bullish = candle.close >= candle.open;
-
-    ctx.strokeStyle = bullish ? "#00d69a" : "#ff5266";
-    ctx.fillStyle = bullish ? "#00b982" : "#ff5266";
-
-    ctx.beginPath();
-    ctx.moveTo(x, highY);
-    ctx.lineTo(x, lowY);
-    ctx.stroke();
-
-    ctx.fillRect(
-      x - candleWidth / 2,
-      Math.min(openY, closeY),
-      candleWidth,
-      Math.max(1, Math.abs(openY - closeY))
-    );
-  });
-
-  // Volume.
-  const maxVolume = Math.max(...visible.map(c => c.volume), 1);
-  const volumeHeight = 32;
-  const volumeBottom = h - 25;
-
-  visible.forEach((candle, i) => {
-    const x = i * step + step / 2;
-    const volume = (candle.volume / maxVolume) * volumeHeight;
-
-    ctx.fillStyle =
-      candle.close >= candle.open
-        ? "rgba(0,214,154,.35)"
-        : "rgba(255,82,102,.35)";
-
-    ctx.fillRect(
-      x - candleWidth / 2,
-      volumeBottom - volume,
-      candleWidth,
-      volume
-    );
-  });
-
-  // Date/time axis under the candles.
-  const dateAxisY = h - 7;
-  const labelCount = Math.max(3, Math.min(8, Math.floor(plotWidth / 100)));
-  const labelEvery = Math.max(
-    1,
-    Math.ceil((visible.length - 1) / (labelCount - 1))
-  );
-
-  ctx.strokeStyle = "rgba(77,101,135,.25)";
-  ctx.beginPath();
-  ctx.moveTo(0, h - 19);
-  ctx.lineTo(plotWidth, h - 19);
-  ctx.stroke();
-
-  ctx.fillStyle = "#7f8ba3";
-  ctx.font = "10px Arial";
-  ctx.textAlign = "center";
-
-  for (let i = 0; i < visible.length; i += labelEvery) {
-    const candle = visible[i];
-    const x = i * step + step / 2;
-
-    const date = new Date(candle.time);
-
-    let label;
-    if (currentInterval === "1d" || currentInterval === "1w") {
-      label = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      });
-    } else {
-      label = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric"
-      }) + " " + date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      });
+    SOLUSDT:{
+      name:"SOL/USDT",
+      description:"Solana / TetherUS",
+      icon:"S"
     }
 
-    // Avoid drawing the last label outside the plot.
-    const safeX = Math.max(34, Math.min(plotWidth - 34, x));
-    ctx.fillText(label, safeX, dateAxisY);
+  };
+
+  const asset =
+    info[symbol] ||
+    info.BTCUSDT;
+
+  const name =
+    document.getElementById(
+      "assetName"
+    );
+
+  const description =
+    document.getElementById(
+      "assetDescription"
+    );
+
+  const icon =
+    document.getElementById(
+      "coinIcon"
+    );
+
+  if (name)
+    name.textContent =
+      asset.name;
+
+  if (description)
+    description.textContent =
+      asset.description;
+
+  if (icon)
+    icon.textContent =
+      asset.icon;
+}
+
+
+// ===============================
+// DRAW CANDLES
+// ===============================
+
+function drawChart(
+  candles,
+  w,
+  h
+) {
+
+  ctx.clearRect(
+    0,
+    0,
+    w,
+    h
+  );
+
+  if (!candles.length)
+    return;
+
+  const paddingTop =
+    15;
+
+  const paddingBottom =
+    62;
+
+  const priceAxisWidth =
+    82;
+
+  const plotWidth =
+    Math.max(
+      1,
+      w -
+      priceAxisWidth
+    );
+
+  const chartHeight =
+    h -
+    paddingTop -
+    paddingBottom;
+
+  const baseVisible =
+    Math.min(
+      INITIAL_VISIBLE_COUNT,
+      candles.length
+    );
+
+  const visibleCount =
+    Math.max(
+      25,
+      Math.min(
+        candles.length,
+        Math.round(
+          baseVisible /
+          chartZoom
+        )
+      )
+    );
+
+  const maxOffset =
+    Math.max(
+      0,
+      candles.length -
+      visibleCount
+    );
+
+  chartOffset =
+    Math.max(
+      0,
+      Math.min(
+        maxOffset,
+        chartOffset
+      )
+    );
+
+  const startIndex =
+    Math.floor(
+      chartOffset
+    );
+
+  const visible =
+    candles.slice(
+      startIndex,
+      startIndex +
+      visibleCount
+    );
+
+  const maxPrice =
+    Math.max(
+      ...visible.map(
+        c => c.high
+      )
+    );
+
+  const minPrice =
+    Math.min(
+      ...visible.map(
+        c => c.low
+      )
+    );
+
+  const range =
+    maxPrice -
+    minPrice ||
+    1;
+
+  const step =
+    plotWidth /
+    Math.max(
+      1,
+      visible.length
+    );
+
+  const candleWidth =
+    Math.max(
+      2,
+      Math.min(
+        18,
+        step *
+        0.55
+      )
+    );
+
+  function priceToY(price) {
+
+    return (
+      paddingTop +
+      (
+        (
+          maxPrice -
+          price
+        ) /
+        range
+      ) *
+      chartHeight
+    );
   }
 
-  // Always show the final visible candle's date.
+  ctx.fillStyle =
+    "#0a1220";
+
+  ctx.fillRect(
+    plotWidth,
+    0,
+    priceAxisWidth,
+    h
+  );
+
+  ctx.strokeStyle =
+    "rgba(77,101,135,.28)";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    plotWidth,
+    0
+  );
+
+  ctx.lineTo(
+    plotWidth,
+    h
+  );
+
+  ctx.stroke();
+
+  ctx.fillStyle =
+    "#7f8ba3";
+
+  ctx.font =
+    "10px Arial";
+
+  ctx.textAlign =
+    "right";
+
+  for (
+    let i = 0;
+    i < 5;
+    i++
+  ) {
+
+    const price =
+      maxPrice -
+      (
+        range /
+        4
+      ) *
+      i;
+
+    const y =
+      paddingTop +
+      (
+        chartHeight /
+        4
+      ) *
+      i;
+
+    ctx.strokeStyle =
+      "rgba(77,101,135,.14)";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      0,
+      y
+    );
+
+    ctx.lineTo(
+      plotWidth,
+      y
+    );
+
+    ctx.stroke();
+
+    ctx.fillStyle =
+      "#7f8ba3";
+
+    ctx.fillText(
+      money(price),
+      w - 7,
+      y + 3
+    );
+  }
+
+  visible.forEach(
+    (candle, i) => {
+
+      const x =
+        i *
+        step +
+        step / 2;
+
+      const openY =
+        priceToY(
+          candle.open
+        );
+
+      const closeY =
+        priceToY(
+          candle.close
+        );
+
+      const highY =
+        priceToY(
+          candle.high
+        );
+
+      const lowY =
+        priceToY(
+          candle.low
+        );
+
+      const bullish =
+        candle.close >=
+        candle.open;
+
+      ctx.strokeStyle =
+        bullish
+          ? "#00d69a"
+          : "#ff5266";
+
+      ctx.fillStyle =
+        bullish
+          ? "#00b982"
+          : "#ff5266";
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        x,
+        highY
+      );
+
+      ctx.lineTo(
+        x,
+        lowY
+      );
+
+      ctx.stroke();
+
+      ctx.fillRect(
+        x -
+        candleWidth / 2,
+
+        Math.min(
+          openY,
+          closeY
+        ),
+
+        candleWidth,
+
+        Math.max(
+          1,
+          Math.abs(
+            openY -
+            closeY
+          )
+        )
+      );
+
+    }
+  );
+
+  const maxVolume =
+    Math.max(
+      ...visible.map(
+        c => c.volume
+      ),
+      1
+    );
+
+  const volumeHeight =
+    32;
+
+  const volumeBottom =
+    h - 25;
+
+  visible.forEach(
+    (candle, i) => {
+
+      const x =
+        i *
+        step +
+        step / 2;
+
+      const volume =
+        (
+          candle.volume /
+          maxVolume
+        ) *
+        volumeHeight;
+
+      ctx.fillStyle =
+        candle.close >=
+        candle.open
+          ? "rgba(0,214,154,.35)"
+          : "rgba(255,82,102,.35)";
+
+      ctx.fillRect(
+        x -
+        candleWidth / 2,
+
+        volumeBottom -
+        volume,
+
+        candleWidth,
+        volume
+      );
+    }
+  );
+
+  const dateAxisY =
+    h - 7;
+
+  const labelCount =
+    Math.max(
+      3,
+      Math.min(
+        8,
+        Math.floor(
+          plotWidth /
+          100
+        )
+      )
+    );
+
+  const labelEvery =
+    Math.max(
+      1,
+      Math.ceil(
+        (
+          visible.length -
+          1
+        ) /
+        (
+          labelCount -
+          1
+        )
+      )
+    );
+
+  ctx.strokeStyle =
+    "rgba(77,101,135,.25)";
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    0,
+    h - 19
+  );
+
+  ctx.lineTo(
+    plotWidth,
+    h - 19
+  );
+
+  ctx.stroke();
+
+  ctx.fillStyle =
+    "#7f8ba3";
+
+  ctx.font =
+    "10px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  for (
+    let i = 0;
+    i < visible.length;
+    i += labelEvery
+  ) {
+
+    const candle =
+      visible[i];
+
+    const x =
+      i *
+      step +
+      step / 2;
+
+    const date =
+      new Date(
+        candle.time
+      );
+
+    let label;
+
+    if (
+      currentInterval === "1d" ||
+      currentInterval === "1w"
+    ) {
+
+      label =
+        date.toLocaleDateString(
+          "en-US",
+          {
+            month:"short",
+            day:"numeric",
+            year:"numeric"
+          }
+        );
+
+    } else {
+
+      label =
+        date.toLocaleDateString(
+          "en-US",
+          {
+            month:"short",
+            day:"numeric"
+          }
+        ) +
+        " " +
+        date.toLocaleTimeString(
+          "en-US",
+          {
+            hour:"2-digit",
+            minute:"2-digit",
+            hour12:false
+          }
+        );
+    }
+
+    const safeX =
+      Math.max(
+        34,
+        Math.min(
+          plotWidth - 34,
+          x
+        )
+      );
+
+    ctx.fillText(
+      label,
+      safeX,
+      dateAxisY
+    );
+  }
+
   if (visible.length) {
-    const lastIndex = visible.length - 1;
-    const last = visible[lastIndex];
-    const x = lastIndex * step + step / 2;
 
-    const date = new Date(last.time);
+    const lastIndex =
+      visible.length -
+      1;
+
+    const last =
+      visible[lastIndex];
+
+    const x =
+      lastIndex *
+      step +
+      step / 2;
+
+    const date =
+      new Date(
+        last.time
+      );
+
     const label =
-      currentInterval === "1d" || currentInterval === "1w"
-        ? date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric"
-          })
-        : date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric"
-          }) + " " + date.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-          });
+      currentInterval === "1d" ||
+      currentInterval === "1w"
 
-    const safeX = Math.max(34, Math.min(plotWidth - 34, x));
-    ctx.fillText(label, safeX, dateAxisY);
+        ? date.toLocaleDateString(
+            "en-US",
+            {
+              month:"short",
+              day:"numeric",
+              year:"numeric"
+            }
+          )
+
+        : date.toLocaleDateString(
+            "en-US",
+            {
+              month:"short",
+              day:"numeric"
+            }
+          ) +
+          " " +
+          date.toLocaleTimeString(
+            "en-US",
+            {
+              hour:"2-digit",
+              minute:"2-digit",
+              hour12:false
+            }
+          );
+
+    const safeX =
+      Math.max(
+        34,
+        Math.min(
+          plotWidth - 34,
+          x
+        )
+      );
+
+    ctx.fillText(
+      label,
+      safeX,
+      dateAxisY
+    );
   }
 }
 
@@ -937,141 +1974,341 @@ function drawChart(candles, w, h) {
 // LOAD MARKET
 // ===============================
 
-async function loadMarket(interval, symbol = currentSymbol) {
-  const requestId = ++marketRequestId;
+async function loadMarket(
+  interval,
+  symbol = currentSymbol
+) {
+
+  const requestId =
+    ++marketRequestId;
 
   try {
-    currentInterval = interval;
+
+    currentInterval =
+      interval;
 
     let candles;
     let ticker;
 
     try {
-      candles = await fetchKlines(interval, symbol);
-      ticker = await fetchTicker(symbol);
-    } catch (apiError) {
-      console.warn("Binance API unavailable, showing local fallback candles:", apiError);
-      candles = createFallbackCandles(
-        symbol === "ETHUSDT" ? 3500 :
-        symbol === "SOLUSDT" ? 180 :
-        67000
+
+      candles =
+        await fetchKlines(
+          interval,
+          symbol
+        );
+
+      ticker =
+        await fetchTicker(
+          symbol
+        );
+
+    } catch(apiError) {
+
+      console.warn(
+        "Binance API unavailable, showing local fallback candles:",
+        apiError
       );
+
+      candles =
+        createFallbackCandles(
+          symbol === "ETHUSDT"
+            ? 3500
+            : symbol === "SOLUSDT"
+              ? 180
+              : 67000
+        );
+
       ticker = {
-        lastPrice: candles[candles.length - 1].close,
-        priceChangePercent: "0.00",
-        highPrice: Math.max(...candles.map(c => c.high)),
-        lowPrice: Math.min(...candles.map(c => c.low)),
-        quoteVolume: 0
+
+        lastPrice:
+          candles[
+            candles.length - 1
+          ].close,
+
+        priceChangePercent:
+          "0.00",
+
+        highPrice:
+          Math.max(
+            ...candles.map(
+              c => c.high
+            )
+          ),
+
+        lowPrice:
+          Math.min(
+            ...candles.map(
+              c => c.low
+            )
+          ),
+
+        quoteVolume:
+          0
       };
     }
 
-    // A slower old request must never overwrite the newly selected coin.
-    if (requestId !== marketRequestId || symbol !== currentSymbol) return;
+    if (
+      requestId !==
+      marketRequestId ||
+      symbol !==
+      currentSymbol
+    )
+      return;
 
-    currentCandles = candles;
-    updateBTCInfo(ticker, symbol);
+    currentCandles =
+      candles;
 
-    const rect = canvas.getBoundingClientRect();
-    drawChart(currentCandles, rect.width, rect.height);
-  } catch (error) {
-    if (requestId === marketRequestId) {
-      console.error("ALPHAVIEW:", error);
-      currentCandles = createFallbackCandles();
-      const rect = canvas.getBoundingClientRect();
-      drawChart(currentCandles, rect.width, rect.height);
+    const initialVisible =
+      Math.min(
+        INITIAL_VISIBLE_COUNT,
+        currentCandles.length
+      );
+
+    chartOffset =
+      Math.max(
+        0,
+        currentCandles.length -
+        initialVisible
+      );
+
+    updateBTCInfo(
+      ticker,
+      symbol
+    );
+
+    const rect =
+      canvas.getBoundingClientRect();
+
+    drawChart(
+      currentCandles,
+      rect.width,
+      rect.height
+    );
+
+  } catch(error) {
+
+    if (
+      requestId ===
+      marketRequestId
+    ) {
+
+      console.error(
+        "ALPHAVIEW:",
+        error
+      );
+
+      currentCandles =
+        createFallbackCandles();
+
+      chartOffset =
+        Math.max(
+          0,
+          currentCandles.length -
+          Math.min(
+            INITIAL_VISIBLE_COUNT,
+            currentCandles.length
+          )
+        );
+
+      const rect =
+        canvas.getBoundingClientRect();
+
+      drawChart(
+        currentCandles,
+        rect.width,
+        rect.height
+      );
     }
   }
 }
+
 
 // ===============================
 // REAL-TIME BINANCE WEBSOCKET
 // ===============================
 
-  
+function connectRealtime(
+  interval,
+  symbol = currentSymbol
+) {
 
-function connectRealtime(interval, symbol = currentSymbol) {
   if (socket) {
+
     socket.close();
-    socket = null;
+
+    socket =
+      null;
   }
 
-  const streamSymbol = symbol.toLowerCase();
+  const streamSymbol =
+    symbol.toLowerCase();
 
-  socket = new WebSocket(
-    `wss://data-stream.binance.vision:443/ws/${streamSymbol}@kline_${interval}`
-  );
+  socket =
+    new WebSocket(
+      `wss://data-stream.binance.vision:443/ws/${streamSymbol}@kline_${interval}`
+    );
 
-  socket.onmessage = event => {
-    if (symbol !== currentSymbol) return;
+  socket.onmessage =
+    event => {
 
-    const data = JSON.parse(event.data);
-    const k = data.k;
+      if (
+        symbol !==
+        currentSymbol
+      )
+        return;
 
-    const candle = {
-      time: k.t,
-      open: Number(k.o),
-      high: Number(k.h),
-      low: Number(k.l),
-      close: Number(k.c),
-      volume: Number(k.v)
+      const data =
+        JSON.parse(
+          event.data
+        );
+
+      const k =
+        data.k;
+
+      const candle = {
+
+        time:k.t,
+        open:Number(k.o),
+        high:Number(k.h),
+        low:Number(k.l),
+        close:Number(k.c),
+        volume:Number(k.v)
+
+      };
+
+      if (
+        currentCandles.length &&
+        currentCandles[
+          currentCandles.length - 1
+        ].time ===
+        candle.time
+      ) {
+
+        currentCandles[
+          currentCandles.length - 1
+        ] =
+          candle;
+
+      } else {
+
+        currentCandles.push(
+          candle
+        );
+
+        if (
+          currentCandles.length >
+          120
+        ) {
+
+          currentCandles.shift();
+        }
+      }
+
+      redrawChart();
+
+      const priceElement =
+        document.querySelector(
+          ".price"
+        );
+
+      if (priceElement) {
+
+        priceElement.innerHTML = `
+          ${money(candle.close)}
+
+          <span
+            class="${candle.close >= candle.open ? "up" : "down"}"
+            style="font-size:13px"
+          >
+            LIVE
+          </span>
+        `;
+      }
+
     };
 
-    if (
-      currentCandles.length &&
-      currentCandles[currentCandles.length - 1].time === candle.time
-    ) {
-      currentCandles[currentCandles.length - 1] = candle;
-    } else {
-      currentCandles.push(candle);
-      if (currentCandles.length > 120) currentCandles.shift();
-    }
+  socket.onerror =
+    error =>
+      console.error(
+        "Binance WebSocket error:",
+        error
+      );
 
-    redrawChart();
-
-    const priceElement = document.querySelector(".price");
-    if (priceElement) {
-      priceElement.innerHTML = `
-        ${money(candle.close)}
-        <span
-          class="${candle.close >= candle.open ? "up" : "down"}"
-          style="font-size:13px"
-        >LIVE</span>
-      `;
-    }
-  };
-
-  socket.onerror = error => console.error("Binance WebSocket error:", error);
-  socket.onclose = () => console.log("Binance realtime disconnected:", symbol);
+  socket.onclose =
+    () =>
+      console.log(
+        "Binance realtime disconnected:",
+        symbol
+      );
 }
 
+
 // ===============================
-// SIDEBAR
+// COIN SELECTION
 // ===============================
 
 document
-  .querySelectorAll(".ticker-card[data-symbol]")
-  .forEach(card => {
-    card.addEventListener("click", async () => {
-      const symbol = card.dataset.symbol;
+  .querySelectorAll(
+    ".ticker-card[data-symbol]"
+  )
+  .forEach(
+    card => {
 
-      // Change identity FIRST. Do not wait for the API.
-      currentSymbol = symbol;
-      marketRequestId++;
-      chartOffset = 0;
-      chartZoom = 1;
-      setAssetInfo(symbol);
+      card.addEventListener(
+        "click",
+        async () => {
 
-      document
-        .querySelectorAll(".ticker-card[data-symbol]")
-        .forEach(c => c.classList.toggle("selected", c === card));
+          const symbol =
+            card.dataset.symbol;
 
-      await loadMarket(currentInterval, symbol);
+          currentSymbol =
+            symbol;
 
-      if (symbol === currentSymbol) {
-        connectRealtime(currentInterval, symbol);
-      }
-    });
-  });
+          marketRequestId++;
+
+          chartOffset =
+            0;
+
+          chartZoom =
+            1;
+
+          setAssetInfo(
+            symbol
+          );
+
+          document
+            .querySelectorAll(
+              ".ticker-card[data-symbol]"
+            )
+            .forEach(
+              c =>
+                c.classList.toggle(
+                  "selected",
+                  c === card
+                )
+            );
+
+          await loadMarket(
+            currentInterval,
+            symbol
+          );
+
+          if (
+            symbol ===
+            currentSymbol
+          ) {
+
+            connectRealtime(
+              currentInterval,
+              symbol
+            );
+          }
+        }
+      );
+    }
+  );
+
 
 // ===============================
 // VIP
@@ -1089,78 +2326,159 @@ function upgrade() {
 // START
 // ===============================
 
-window.addEventListener("load", () => {
-  resizeCanvas();
-  setAssetInfo(currentSymbol);
+window.addEventListener(
+  "load",
+  () => {
 
-  loadMarket("1d", currentSymbol).then(() => {
-    if (currentCandles.length) {
-      connectRealtime("1d", currentSymbol);
-    }
-  });
+    resizeCanvas();
 
-  updateTickerCards();
-});
+    setAssetInfo(
+      currentSymbol
+    );
 
-setInterval(updateTickerCards, 10000);
+    loadMarket(
+      "1d",
+      currentSymbol
+    ).then(
+      () => {
 
+        if (
+          currentCandles.length
+        ) {
 
-// Refresh only the currently selected asset's live 24h stats.
-// The name/icon is NOT delayed by this timer.
-setInterval(async () => {
-  const symbol = currentSymbol;
+          connectRealtime(
+            "1d",
+            currentSymbol
+          );
+        }
+      }
+    );
 
-  try {
-    const ticker = await fetchTicker(symbol);
-    if (symbol !== currentSymbol) return;
-    updateBTCInfo(ticker, symbol);
-  } catch (error) {
-    console.error(error);
+    updateTickerCards();
   }
-}, 10000);
+);
 
-document
-  .querySelectorAll(".timeframes button")
-  .forEach(button => {
+setInterval(
+  updateTickerCards,
+  10000
+);
 
-    button.addEventListener("click", async () => {
 
-      const intervalMap = {
-        "1m": "1m",
-        "5m": "5m",
-        "15m": "15m",
-        "1h": "1h",
-        "4h": "4h",
-        "1D": "1d",
-        "1W": "1w"
-      };
+// Refresh selected asset's stats
+setInterval(
+  async () => {
 
-      const interval =
-        intervalMap[button.textContent.trim()];
+    const symbol =
+      currentSymbol;
 
-      if (!interval) return;
+    try {
 
-      document
-        .querySelectorAll(".timeframes button")
-        .forEach(btn =>
-          btn.classList.remove("active")
+      const ticker =
+        await fetchTicker(
+          symbol
         );
 
-      button.classList.add("active");
+      if (
+        symbol !==
+        currentSymbol
+      )
+        return;
 
-      chartOffset = 0;
-      chartZoom = 1;
+      updateBTCInfo(
+        ticker,
+        symbol
+      );
 
-      await loadMarket(interval, currentSymbol);
+    } catch(error) {
 
-      if (currentCandles.length) {
-        connectRealtime(interval, currentSymbol);
-      }
+      console.error(
+        error
+      );
+    }
 
-    });
+  },
+  10000
+);
 
-  });
+
+// ===============================
+// TIMEFRAMES
+// ===============================
+
+document
+  .querySelectorAll(
+    ".timeframes button"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const intervalMap = {
+
+            "1m":"1m",
+            "5m":"5m",
+            "15m":"15m",
+            "1h":"1h",
+            "4h":"4h",
+            "1D":"1d",
+            "1W":"1w"
+
+          };
+
+          const interval =
+            intervalMap[
+              button.textContent.trim()
+            ];
+
+          if (!interval)
+            return;
+
+          document
+            .querySelectorAll(
+              ".timeframes button"
+            )
+            .forEach(
+              btn =>
+                btn.classList.remove(
+                  "active"
+                )
+            );
+
+          button.classList.add(
+            "active"
+          );
+
+          chartOffset =
+            0;
+
+          chartZoom =
+            1;
+
+          await loadMarket(
+            interval,
+            currentSymbol
+          );
+
+          if (
+            currentCandles.length
+          ) {
+
+            connectRealtime(
+              interval,
+              currentSymbol
+            );
+          }
+
+        }
+      );
+
+    }
+  );
 
 </script>
+
 </body>
 </html>
