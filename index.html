@@ -655,6 +655,9 @@ const MAX_CHART_ZOOM = 4;
 let isDraggingChart = false;
 let dragStartX = 0;
 let dragStartOffset = 0;
+let dragStartY = 0;
+let chartVerticalOffset = 0;
+let dragStartVerticalOffset = 0;
 
 // Vertical price-axis scaling
 let priceScale = 1;
@@ -723,19 +726,21 @@ function redrawChart() {
   );
 }
 
-function startDrag(x) {
+function startDrag(x, y) {
 
   isDraggingChart = true;
 
   dragStartX = x;
+  dragStartY = y;
   dragStartOffset = chartOffset;
+  dragStartVerticalOffset = chartVerticalOffset;
 
   document
     .querySelector(".chart-wrap")
     .classList.add("dragging");
 }
 
-function dragChart(x) {
+function dragChart(x, y) {
 
   if (
     !isDraggingChart ||
@@ -776,6 +781,12 @@ function dragChart(x) {
     ) *
     visibleCount;
 
+  // Vertical drag pans the price area up/down.
+  // This is separate from the price-axis scaling gesture.
+  chartVerticalOffset =
+    dragStartVerticalOffset +
+    (y - dragStartY);
+
   redrawChart();
 }
 
@@ -815,7 +826,7 @@ canvas.addEventListener(
       return;
     }
 
-    startDrag(e.clientX);
+    startDrag(e.clientX, e.clientY);
   }
 );
 
@@ -843,7 +854,7 @@ canvas.addEventListener(
     if (!isDraggingChart)
       return;
 
-    dragChart(e.clientX);
+    dragChart(e.clientX, e.clientY);
   }
 );
 
@@ -1623,6 +1634,7 @@ function drawChart(
 
     return (
       paddingTop +
+      chartVerticalOffset +
       (
         (
           displayMaxPrice -
