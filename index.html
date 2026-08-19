@@ -378,7 +378,7 @@
 </div>
   <script>
 
-const BINANCE_API = "https://api.binance.com/api/v3";
+const BINANCE_API = "https://data-api.binance.vision/api/v3";
 
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
@@ -680,27 +680,17 @@ if (selectedCard) {
 } 
 }
 // ===============================
+// ASSET INFO
+// ===============================
+
 function setAssetInfo(symbol) {
   const info = {
-    BTCUSDT: {
-      name: "BTC/USDT",
-      description: "Bitcoin / TetherUS",
-      icon: "₿"
-    },
-    ETHUSDT: {
-      name: "ETH/USDT",
-      description: "Ethereum / TetherUS",
-      icon: "Ξ"
-    },
-    SOLUSDT: {
-      name: "SOL/USDT",
-      description: "Solana / TetherUS",
-      icon: "S"
-    }
+    BTCUSDT: { name: "BTC/USDT", description: "Bitcoin / TetherUS", icon: "₿" },
+    ETHUSDT: { name: "ETH/USDT", description: "Ethereum / TetherUS", icon: "Ξ" },
+    SOLUSDT: { name: "SOL/USDT", description: "Solana / TetherUS", icon: "S" }
   };
 
   const asset = info[symbol] || info.BTCUSDT;
-
   const name = document.getElementById("assetName");
   const description = document.getElementById("assetDescription");
   const icon = document.getElementById("coinIcon");
@@ -709,6 +699,8 @@ function setAssetInfo(symbol) {
   if (description) description.textContent = asset.description;
   if (icon) icon.textContent = asset.icon;
 }
+
+// ===============================
 // DRAW REAL CANDLES
 // ===============================
 
@@ -841,6 +833,14 @@ async function loadMarket(interval, symbol = currentSymbol) {
   } catch (error) {
     if (requestId === marketRequestId) {
       console.error("ALPHAVIEW:", error);
+      currentCandles = [];
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = "#7f8ba3";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Market data connection failed", rect.width / 2, rect.height / 2 - 8);
+      ctx.fillText("Check the browser console / network connection", rect.width / 2, rect.height / 2 + 14);
     }
   }
 }
@@ -860,7 +860,7 @@ function connectRealtime(interval, symbol = currentSymbol) {
   const streamSymbol = symbol.toLowerCase();
 
   socket = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${interval}`
+    `wss://data-stream.binance.vision:443/ws/${streamSymbol}@kline_${interval}`
   );
 
   socket.onmessage = event => {
@@ -951,19 +951,19 @@ function upgrade() {
 // START
 // ===============================
 
-
 window.addEventListener("load", () => {
   resizeCanvas();
   setAssetInfo(currentSymbol);
 
   loadMarket("1d", currentSymbol).then(() => {
-    if (currentSymbol === "BTCUSDT") {
+    if (currentCandles.length && currentSymbol === "BTCUSDT") {
       connectRealtime("1d", currentSymbol);
     }
   });
 
   updateTickerCards();
 });
+
 setInterval(updateTickerCards, 10000);
 
 
