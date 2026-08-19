@@ -1,4 +1,4 @@
-
+alphaview 
 
 
 
@@ -250,7 +250,7 @@
 
 <section class="ticker">
 
-  <div class="ticker-card" data-symbol="BTCUSDT">
+  <div class="ticker-card selected" data-symbol="BTCUSDT">
     <span>BTC/USDT</span>
     <strong>Loading...</strong>
     <small>--</small>
@@ -417,7 +417,7 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 
 // ===============================
-// CHART PAN / ZOOM
+// CHART INTERACTION
 // ===============================
 
 function redrawChart() {
@@ -425,49 +425,50 @@ function redrawChart() {
   drawChart(currentCandles, rect.width, rect.height);
 }
 
-function beginChartDrag(x) {
+function startDrag(x) {
   isDraggingChart = true;
   dragStartX = x;
   dragStartOffset = chartOffset;
   document.querySelector(".chart-wrap").classList.add("dragging");
 }
 
-function moveChartDrag(x) {
+function dragChart(x) {
   if (!isDraggingChart || !currentCandles.length) return;
 
   const rect = canvas.getBoundingClientRect();
+  const plotWidth = Math.max(1, rect.width - 82);
   const visibleCount = Math.max(
     25,
     Math.min(currentCandles.length, Math.round(currentCandles.length / chartZoom))
   );
-  const plotWidth = Math.max(1, rect.width - 78);
-  const candleDelta = -((x - dragStartX) / plotWidth) * visibleCount;
 
-  chartOffset = dragStartOffset + candleDelta;
+  chartOffset =
+    dragStartOffset - ((x - dragStartX) / plotWidth) * visibleCount;
+
   redrawChart();
 }
 
-function endChartDrag() {
+function stopDrag() {
   isDraggingChart = false;
   document.querySelector(".chart-wrap").classList.remove("dragging");
 }
 
-canvas.addEventListener("mousedown", e => beginChartDrag(e.clientX));
-window.addEventListener("mousemove", e => moveChartDrag(e.clientX));
-window.addEventListener("mouseup", endChartDrag);
+canvas.addEventListener("mousedown", e => startDrag(e.clientX));
+window.addEventListener("mousemove", e => dragChart(e.clientX));
+window.addEventListener("mouseup", stopDrag);
 
 canvas.addEventListener("touchstart", e => {
-  if (e.touches.length === 1) beginChartDrag(e.touches[0].clientX);
+  if (e.touches.length === 1) startDrag(e.touches[0].clientX);
 }, { passive: true });
 
 canvas.addEventListener("touchmove", e => {
   if (e.touches.length === 1 && isDraggingChart) {
-    moveChartDrag(e.touches[0].clientX);
+    dragChart(e.touches[0].clientX);
     e.preventDefault();
   }
 }, { passive: false });
 
-canvas.addEventListener("touchend", endChartDrag);
+canvas.addEventListener("touchend", stopDrag);
 
 canvas.addEventListener("wheel", e => {
   e.preventDefault();
@@ -475,7 +476,7 @@ canvas.addEventListener("wheel", e => {
 
   const oldZoom = chartZoom;
   const rect = canvas.getBoundingClientRect();
-  const plotWidth = Math.max(1, rect.width - 78);
+  const plotWidth = Math.max(1, rect.width - 82);
   const mouseRatio = Math.max(
     0,
     Math.min(1, (e.clientX - rect.left) / plotWidth)
@@ -688,23 +689,26 @@ function drawChart(candles, w, h) {
 
   const paddingTop = 15;
   const paddingBottom = 55;
-  const priceAxisWidth = 78;
+  const priceAxisWidth = 82;
   const plotWidth = Math.max(1, w - priceAxisWidth);
   const chartHeight = h - paddingTop - paddingBottom;
-
-  const maxPrice = Math.max(...candles.map(c => c.high));
-  const minPrice = Math.min(...candles.map(c => c.low));
-  const range = maxPrice - minPrice || 1;
 
   const visibleCount = Math.max(
     25,
     Math.min(candles.length, Math.round(candles.length / chartZoom))
   );
+
   const maxOffset = Math.max(0, candles.length - visibleCount);
   chartOffset = Math.max(0, Math.min(maxOffset, chartOffset));
 
   const startIndex = Math.floor(chartOffset);
   const visible = candles.slice(startIndex, startIndex + visibleCount);
+
+  // Scale the visible candles, not the hidden candles.
+  const maxPrice = Math.max(...visible.map(c => c.high));
+  const minPrice = Math.min(...visible.map(c => c.low));
+  const range = maxPrice - minPrice || 1;
+
   const step = plotWidth / Math.max(1, visible.length);
   const candleWidth = Math.max(2, Math.min(18, step * 0.55));
 
@@ -712,16 +716,16 @@ function drawChart(candles, w, h) {
     return paddingTop + ((maxPrice - price) / range) * chartHeight;
   }
 
-  // Reserve a dedicated right-side price axis.
+  // Dedicated price-axis area.
   ctx.fillStyle = "#0a1220";
   ctx.fillRect(plotWidth, 0, priceAxisWidth, h);
-  ctx.strokeStyle = "rgba(77,101,135,.25)";
+
+  ctx.strokeStyle = "rgba(77,101,135,.28)";
   ctx.beginPath();
   ctx.moveTo(plotWidth, 0);
   ctx.lineTo(plotWidth, h);
   ctx.stroke();
 
-  // PRICE GRID
   ctx.fillStyle = "#7f8ba3";
   ctx.font = "10px Arial";
   ctx.textAlign = "right";
@@ -736,10 +740,9 @@ function drawChart(candles, w, h) {
     ctx.lineTo(plotWidth, y);
     ctx.stroke();
 
-    ctx.fillText(money(price), w - 6, y + 3);
+    ctx.fillText(money(price), w - 7, y + 3);
   }
 
-  // CANDLES
   visible.forEach((candle, i) => {
     const x = i * step + step / 2;
     const openY = priceToY(candle.open);
@@ -756,18 +759,14 @@ function drawChart(candles, w, h) {
     ctx.lineTo(x, lowY);
     ctx.stroke();
 
-    const bodyTop = Math.min(openY, closeY);
-    const bodyHeight = Math.max(1, Math.abs(openY - closeY));
-
     ctx.fillRect(
       x - candleWidth / 2,
-      bodyTop,
+      Math.min(openY, closeY),
       candleWidth,
-      bodyHeight
+      Math.max(1, Math.abs(openY - closeY))
     );
   });
 
-  // VOLUME
   const maxVolume = Math.max(...visible.map(c => c.volume), 1);
   const volumeHeight = 45;
 
@@ -802,7 +801,7 @@ async function loadMarket(interval, symbol = currentSymbol) {
     const candles = await fetchKlines(interval, symbol);
     const ticker = await fetchTicker(symbol);
 
-    // Ignore late API responses from a previous coin/timeframe.
+    // A slower old request must never overwrite the newly selected coin.
     if (requestId !== marketRequestId || symbol !== currentSymbol) return;
 
     currentCandles = candles;
@@ -835,12 +834,7 @@ function connectRealtime(interval, symbol = currentSymbol) {
     `wss://stream.binance.com:9443/ws/${streamSymbol}@kline_${interval}`
   );
 
-  socket.onopen = () => {
-    console.log("ALPHAVIEW realtime connected:", symbol, interval);
-  };
-
   socket.onmessage = event => {
-    // Ignore events from an old coin after a fast BTC → ETH → SOL click.
     if (symbol !== currentSymbol) return;
 
     const data = JSON.parse(event.data);
@@ -865,8 +859,7 @@ function connectRealtime(interval, symbol = currentSymbol) {
       if (currentCandles.length > 120) currentCandles.shift();
     }
 
-    const rect = canvas.getBoundingClientRect();
-    drawChart(currentCandles, rect.width, rect.height);
+    redrawChart();
 
     const priceElement = document.querySelector(".price");
     if (priceElement) {
@@ -875,20 +868,13 @@ function connectRealtime(interval, symbol = currentSymbol) {
         <span
           class="${candle.close >= candle.open ? "up" : "down"}"
           style="font-size:13px"
-        >
-          LIVE
-        </span>
+        >LIVE</span>
       `;
     }
   };
 
-  socket.onerror = error => {
-    console.error("Binance WebSocket error:", error);
-  };
-
-  socket.onclose = () => {
-    console.log("Binance realtime disconnected:", symbol);
-  };
+  socket.onerror = error => console.error("Binance WebSocket error:", error);
+  socket.onclose = () => console.log("Binance realtime disconnected:", symbol);
 }
 
 // ===============================
@@ -897,20 +883,27 @@ function connectRealtime(interval, symbol = currentSymbol) {
 
 document
   .querySelectorAll(".ticker-card[data-symbol]")
-  .forEach(card=> {
-
+  .forEach(card => {
     card.addEventListener("click", async () => {
+      const symbol = card.dataset.symbol;
 
-      currentSymbol =
+      // Change identity FIRST. Do not wait for the API.
+      currentSymbol = symbol;
+      marketRequestId++;
+      chartOffset = 0;
+      chartZoom = 1;
+      setAssetInfo(symbol);
 
-        card.dataset.symbol;
+      document
+        .querySelectorAll(".ticker-card[data-symbol]")
+        .forEach(c => c.classList.toggle("selected", c === card));
 
-      await loadMarket(currentInterval);
+      await loadMarket(currentInterval, symbol);
 
-      connectRealtime(currentInterval);
-
+      if (symbol === currentSymbol) {
+        connectRealtime(currentInterval, symbol);
+      }
     });
-
   });
 
 // ===============================
@@ -943,16 +936,15 @@ updateTickerCards( );
 setInterval(updateTickerCards, 10000);
 
 
-// Refresh the currently selected asset's 24h stats.
-// Identity/name is handled immediately by setAssetInfo().
+// Refresh only the currently selected asset's live 24h stats.
+// The name/icon is NOT delayed by this timer.
 setInterval(async () => {
-  const symbolAtStart = currentSymbol;
+  const symbol = currentSymbol;
 
   try {
-    const ticker = await fetchTicker(symbolAtStart);
-    if (symbolAtStart !== currentSymbol) return;
-
-    updateBTCInfo(ticker, symbolAtStart);
+    const ticker = await fetchTicker(symbol);
+    if (symbol !== currentSymbol) return;
+    updateBTCInfo(ticker, symbol);
   } catch (error) {
     console.error(error);
   }
