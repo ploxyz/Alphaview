@@ -1036,7 +1036,7 @@ historyLeft?.addEventListener(
         Math.max(
           0,
           currentCandles.length -
-          visibleCount
+          1
         ),
         chartOffset +
         Math.max(
@@ -1552,11 +1552,13 @@ function drawChart(
       )
     );
 
+  // Allow the viewport to move past the latest real candle so users
+  // can leave empty space on the right for future-candle prediction.
+  // The latest real candle can be moved all the way to the left edge.
   const maxOffset =
     Math.max(
       0,
-      candles.length -
-      visibleCount
+      candles.length - 1
     );
 
   chartOffset =
@@ -1573,12 +1575,22 @@ function drawChart(
       chartOffset
     );
 
+  // Only real candles are rendered; remaining slots are intentionally
+  // left empty so the user can draw/anticipate future candles.
   const visible =
     candles.slice(
-      startIndex,
-      startIndex +
-      visibleCount
+      Math.max(0, startIndex),
+      Math.min(
+        candles.length,
+        startIndex + visibleCount
+      )
     );
+
+  const visibleEntries =
+    visible.map((candle, i) => ({
+      candle,
+      slot: (startIndex + i) - startIndex
+    }));
 
   const maxPrice =
     Math.max(
@@ -1731,11 +1743,11 @@ function drawChart(
     );
   }
 
-  visible.forEach(
-    (candle, i) => {
+  visibleEntries.forEach(
+    ({candle, slot}) => {
 
       const x =
-        i *
+        slot *
         step +
         step / 2;
 
@@ -1824,11 +1836,11 @@ function drawChart(
   const volumeBottom =
     h - 25;
 
-  visible.forEach(
-    (candle, i) => {
+  visibleEntries.forEach(
+    ({candle, slot}) => {
 
       const x =
-        i *
+        slot *
         step +
         step / 2;
 
@@ -1916,15 +1928,18 @@ function drawChart(
 
   for (
     let i = 0;
-    i < visible.length;
+    i < visibleEntries.length;
     i += labelEvery
   ) {
 
+    const entry =
+      visibleEntries[i];
+
     const candle =
-      visible[i];
+      entry.candle;
 
     const x =
-      i *
+      entry.slot *
       step +
       step / 2;
 
@@ -1997,7 +2012,7 @@ function drawChart(
       visible[lastIndex];
 
     const x =
-      lastIndex *
+      (startIndex + lastIndex - startIndex) *
       step +
       step / 2;
 
