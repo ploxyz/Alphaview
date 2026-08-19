@@ -680,6 +680,35 @@ if (selectedCard) {
 } 
 }
 // ===============================
+function setAssetInfo(symbol) {
+  const info = {
+    BTCUSDT: {
+      name: "BTC/USDT",
+      description: "Bitcoin / TetherUS",
+      icon: "₿"
+    },
+    ETHUSDT: {
+      name: "ETH/USDT",
+      description: "Ethereum / TetherUS",
+      icon: "Ξ"
+    },
+    SOLUSDT: {
+      name: "SOL/USDT",
+      description: "Solana / TetherUS",
+      icon: "S"
+    }
+  };
+
+  const asset = info[symbol] || info.BTCUSDT;
+
+  const name = document.getElementById("assetName");
+  const description = document.getElementById("assetDescription");
+  const icon = document.getElementById("coinIcon");
+
+  if (name) name.textContent = asset.name;
+  if (description) description.textContent = asset.description;
+  if (icon) icon.textContent = asset.icon;
+}
 // DRAW REAL CANDLES
 // ===============================
 
@@ -922,17 +951,19 @@ function upgrade() {
 // START
 // ===============================
 
-resizeCanvas();
-setAssetInfo(currentSymbol);
 
-loadMarket("1d", currentSymbol).then(() => {
-  if (currentSymbol === "BTCUSDT") {
-    connectRealtime("1d", currentSymbol);
-  }
+window.addEventListener("load", () => {
+  resizeCanvas();
+  setAssetInfo(currentSymbol);
+
+  loadMarket("1d", currentSymbol).then(() => {
+    if (currentSymbol === "BTCUSDT") {
+      connectRealtime("1d", currentSymbol);
+    }
+  });
+
+  updateTickerCards();
 });
-
-updateTickerCards( );
-
 setInterval(updateTickerCards, 10000);
 
 
