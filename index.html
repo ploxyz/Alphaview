@@ -380,7 +380,7 @@
             <button id="historyLeft" type="button">← Older</button>
             <button id="historyRight" type="button">Newer →</button>
             <span>
-              Drag the chart to browse older dates · Wheel to zoom
+              Drag to browse all loaded candles · Wheel to zoom (100 → 1000)
             </span>
           </div>
 
@@ -646,6 +646,10 @@ let chartOffset = 0;
 let chartZoom = 1;
 
 const INITIAL_VISIBLE_COUNT = 100;
+const MAX_CHART_CANDLES = 1000;
+const MIN_VISIBLE_CANDLES = 25;
+const MIN_CHART_ZOOM = INITIAL_VISIBLE_COUNT / MAX_CHART_CANDLES; // 0.1 = 1000 candles
+const MAX_CHART_ZOOM = 4;
 
 let isDraggingChart = false;
 let dragStartX = 0;
@@ -746,7 +750,7 @@ function dragChart(x) {
 
   const visibleCount =
     Math.max(
-      25,
+      MIN_VISIBLE_CANDLES,
       Math.min(
         currentCandles.length,
         Math.round(
@@ -867,9 +871,9 @@ canvas.addEventListener(
 
     chartZoom =
       Math.max(
-        0.5,
+        MIN_CHART_ZOOM,
         Math.min(
-          4,
+          MAX_CHART_ZOOM,
           chartZoom *
           (
             e.deltaY < 0
@@ -887,7 +891,7 @@ canvas.addEventListener(
 
     const oldVisible =
       Math.max(
-        25,
+        MIN_VISIBLE_CANDLES,
         Math.min(
           currentCandles.length,
           Math.round(
@@ -899,7 +903,7 @@ canvas.addEventListener(
 
     const newVisible =
       Math.max(
-        25,
+        MIN_VISIBLE_CANDLES,
         Math.min(
           currentCandles.length,
           Math.round(
@@ -952,7 +956,7 @@ historyLeft?.addEventListener(
 
     const visibleCount =
       Math.max(
-        25,
+        MIN_VISIBLE_CANDLES,
         Math.min(
           currentCandles.length,
           Math.round(
@@ -998,7 +1002,7 @@ historyRight?.addEventListener(
 
     const visibleCount =
       Math.max(
-        25,
+        MIN_VISIBLE_CANDLES,
         Math.min(
           currentCandles.length,
           Math.round(
@@ -1473,7 +1477,7 @@ function drawChart(
 
   const visibleCount =
     Math.max(
-      25,
+      MIN_VISIBLE_CANDLES,
       Math.min(
         candles.length,
         Math.round(
@@ -2198,10 +2202,24 @@ function connectRealtime(
 
         if (
           currentCandles.length >
-          120
+          MAX_CHART_CANDLES
         ) {
+          const removed =
+            currentCandles.length -
+            MAX_CHART_CANDLES;
 
-          currentCandles.shift();
+          currentCandles.splice(
+            0,
+            removed
+          );
+
+          // Preserve the same historical area after
+          // the oldest candle rolls out of the 1000-candle buffer.
+          chartOffset =
+            Math.max(
+              0,
+              chartOffset - removed
+            );
         }
       }
 
