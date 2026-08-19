@@ -682,6 +682,13 @@ let dragStartVerticalOffset = 0;
 // Vertical price-axis scaling
 let priceScale = 1;
 let isDraggingPriceAxis = false;
+
+// Mobile two-finger pinch zoom state
+const activePointers = new Map();
+let isPinching = false;
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let pinchStartCenterX = 0;
 let priceAxisStartY = 0;
 let priceAxisStartScale = 1;
 const MIN_PRICE_SCALE = 0.25;
@@ -828,6 +835,33 @@ canvas.addEventListener(
     if (!currentCandles.length)
       return;
 
+    // Track touch pointers so two fingers can pinch-zoom instead of
+    // triggering the normal chart drag.
+    if (e.pointerType === "touch") {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      canvas.setPointerCapture?.(e.pointerId);
+
+      if (activePointers.size === 2) {
+        isPinching = true;
+        isDraggingChart = false;
+        isDraggingPriceAxis = false;
+        document
+          .querySelector(".chart-wrap")
+          .classList.remove("dragging", "price-scaling");
+
+        const pts = [...activePointers.values()];
+        pinchStartDistance = Math.hypot(
+          pts[1].x - pts[0].x,
+          pts[1].y - pts[0].y
+        );
+        pinchStartZoom = chartZoom;
+        pinchStartCenterX =
+          ((pts[0].x + pts[1].x) / 2) -
+          canvas.getBoundingClientRect().left;
+        return;
+      }
+    }
+
     const rect = canvas.getBoundingClientRect();
     const priceAxisWidth = 105;
     const plotWidth = Math.max(1, rect.width - priceAxisWidth);
@@ -835,7 +869,8 @@ canvas.addEventListener(
 
     canvas.setPointerCapture?.(e.pointerId);
 
-    // Dragging directly on the price labels/axis scales the candle height.
+    // Do not start a one-finger drag until it is clear that this is not
+    // becoming a two-finger gesture. A second touch cancels the drag above.
     if (localX >= plotWidth) {
       isDraggingPriceAxis = true;
       priceAxisStartY = e.clientY;
@@ -853,6 +888,42 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointermove",
   e => {
+
+    if (e.pointerType === "touch" && activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (isPinching && activePointers.size >= 2) {
+        const pts = [...activePointers.values()].slice(0, 2);
+        const distance = Math.max(1, Math.hypot(
+          pts[1].x - pts[0].x,
+          pts[1].y - pts[0].y
+        ));
+        const ratio = distance / Math.max(1, pinchStartDistance);
+        const oldZoom = chartZoom;
+        chartZoom = Math.max(
+          MIN_CHART_ZOOM,
+          Math.min(MAX_CHART_ZOOM, pinchStartZoom * ratio)
+        );
+
+        // Keep the content underneath the pinch center stable.
+        const rect = canvas.getBoundingClientRect();
+        const plotWidth = Math.max(1, rect.width - 105);
+        const centerRatio = Math.max(0, Math.min(1, pinchStartCenterX / plotWidth));
+        const baseVisible = Math.min(INITIAL_VISIBLE_COUNT, currentCandles.length);
+        const oldVisible = Math.max(
+          MIN_VISIBLE_CANDLES,
+          Math.min(currentCandles.length, Math.round(baseVisible / oldZoom))
+        );
+        const newVisible = Math.max(
+          MIN_VISIBLE_CANDLES,
+          Math.min(currentCandles.length, Math.round(baseVisible / chartZoom))
+        );
+        chartOffset += (oldVisible - newVisible) * centerRatio;
+
+        redrawChart();
+        return;
+      }
+    }
 
     if (isDraggingPriceAxis) {
       // Move upward = zoom the price scale in (taller candles).
@@ -881,6 +952,17 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointerup",
   e => {
+    if (e.pointerType === "touch") {
+      activePointers.delete(e.pointerId);
+      if (isPinching) {
+        if (activePointers.size < 2) {
+          isPinching = false;
+          pinchStartDistance = 0;
+        }
+        return;
+      }
+    }
+
     if (isDraggingPriceAxis) {
       isDraggingPriceAxis = false;
       document
@@ -894,6 +976,13 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointercancel",
   e => {
+    if (e.pointerType === "touch") {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) {
+        isPinching = false;
+        pinchStartDistance = 0;
+      }
+    }
     isDraggingPriceAxis = false;
     document
       .querySelector(".chart-wrap")
