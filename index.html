@@ -137,7 +137,7 @@
     .timeframes{display:flex;gap:15px;margin:17px 0 10px;color:#9ca6b8;font-size:11px}
     .timeframes button{background:none;border:0;color:inherit;cursor:pointer}
     .timeframes button.active{background:#17224a;color:#8ea4ff;padding:5px 8px;border-radius:5px}
-    .chart-wrap{height:355px;position:relative;overflow:hidden;border-top:1px solid #111c2c;border-bottom:1px solid #111c2c}
+    .chart-wrap{height:500px;position:relative;overflow:hidden;border-top:1px solid #111c2c;border-bottom:1px solid #111c2c}
     .grid-lines{
       position:absolute;inset:0;
       background-image:
@@ -226,7 +226,7 @@
       .ticker{grid-template-columns:repeat(2,1fr)}
       .stats{display:none}
       .indicator-bar{grid-template-columns:repeat(2,1fr)}
-      .chart-wrap{height:280px}
+      .chart-wrap{height:380px}
     }
   </style>
 </head>
@@ -652,6 +652,26 @@ const MIN_VISIBLE_CANDLES = 25;
 const MIN_CHART_ZOOM = INITIAL_VISIBLE_COUNT / MAX_CHART_CANDLES; // 0.1 = 1000 candles
 const MAX_CHART_ZOOM = 4;
 
+// Allow the viewport to move into the future without changing chart size.
+// The future range is one day for intraday intervals (e.g. 288 slots on 5m).
+function getIntervalMs() {
+  const map = {
+    "1m": 60 * 1000,
+    "5m": 5 * 60 * 1000,
+    "15m": 15 * 60 * 1000,
+    "1h": 60 * 60 * 1000,
+    "4h": 4 * 60 * 60 * 1000,
+    "1d": 24 * 60 * 60 * 1000,
+    "1w": 7 * 24 * 60 * 60 * 1000
+  };
+  return map[currentInterval] || 24 * 60 * 60 * 1000;
+}
+
+function getFutureSlots() {
+  const intervalMs = getIntervalMs();
+  return Math.max(1, Math.ceil((24 * 60 * 60 * 1000) / intervalMs));
+}
+
 let isDraggingChart = false;
 let dragStartX = 0;
 let dragStartOffset = 0;
@@ -809,7 +829,7 @@ canvas.addEventListener(
       return;
 
     const rect = canvas.getBoundingClientRect();
-    const priceAxisWidth = 82;
+    const priceAxisWidth = 105;
     const plotWidth = Math.max(1, rect.width - priceAxisWidth);
     const localX = e.clientX - rect.left;
 
@@ -1520,7 +1540,7 @@ function drawChart(
     62;
 
   const priceAxisWidth =
-    82;
+    105;
 
   const plotWidth =
     Math.max(
@@ -1552,13 +1572,13 @@ function drawChart(
       )
     );
 
-  // Allow the viewport to move past the latest real candle so users
-  // can leave empty space on the right for future-candle prediction.
-  // The latest real candle can be moved all the way to the left edge.
+  // The viewport can move beyond the newest real candle.
+  // This creates a real future-time area (without resizing the chart)
+  // where users can inspect 5m/15m/1h/etc. future positions.
   const maxOffset =
     Math.max(
       0,
-      candles.length - 1
+      candles.length - 1 + getFutureSlots()
     );
 
   chartOffset =
@@ -1575,33 +1595,53 @@ function drawChart(
       chartOffset
     );
 
-  // Only real candles are rendered; remaining slots are intentionally
-  // left empty so the user can draw/anticipate future candles.
-  const visible =
-    candles.slice(
-      Math.max(0, startIndex),
-      Math.min(
-        candles.length,
-        startIndex + visibleCount
-      )
+  const intervalMs = getIntervalMs();
+  const lastRealTime =
+    candles[candles.length - 1].time;
+
+  // Keep a fixed number of horizontal slots. Real candles occupy their
+  // normal slots; future slots are empty but have real future timestamps.
+  const visibleEntries =
+    Array.from(
+      { length: visibleCount },
+      (_, i) => {
+        const index = startIndex + i;
+        const candle = candles[index] || null;
+        return {
+          candle,
+          slot: i,
+          index,
+          time: candle
+            ? candle.time
+            : lastRealTime + (index - (candles.length - 1)) * intervalMs
+        };
+      }
     );
 
-  const visibleEntries =
-    visible.map((candle, i) => ({
-      candle,
-      slot: (startIndex + i) - startIndex
-    }));
+  const visibleRealCandles =
+    visibleEntries
+      .filter(entry => entry.candle)
+      .map(entry => entry.candle);
+
+  // If the viewport is entirely in the future, keep the price scale based
+  // on the latest real candles instead of producing an invalid range.
+  const priceSource =
+    visibleRealCandles.length
+      ? visibleRealCandles
+      : candles.slice(
+          Math.max(0, candles.length - Math.min(100, candles.length))
+        );
 
   const maxPrice =
     Math.max(
-      ...visible.map(
+      ...priceSource.map(
         c => c.high
       )
     );
 
   const minPrice =
     Math.min(
-      ...visible.map(
+      ...priceSource.map(
         c => c.low
       )
     );
@@ -1629,7 +1669,7 @@ function drawChart(
     plotWidth /
     Math.max(
       1,
-      visible.length
+      visibleCount
     );
 
   const candleWidth =
@@ -1689,7 +1729,7 @@ function drawChart(
     "#7f8ba3";
 
   ctx.font =
-    "10px Arial";
+    "13px Arial";
 
   ctx.textAlign =
     "right";
@@ -1745,6 +1785,8 @@ function drawChart(
 
   visibleEntries.forEach(
     ({candle, slot}) => {
+
+      if (!candle) return;
 
       const x =
         slot *
@@ -1824,7 +1866,7 @@ function drawChart(
 
   const maxVolume =
     Math.max(
-      ...visible.map(
+      ...visibleRealCandles.map(
         c => c.volume
       ),
       1
@@ -1838,6 +1880,8 @@ function drawChart(
 
   visibleEntries.forEach(
     ({candle, slot}) => {
+
+      if (!candle) return;
 
       const x =
         slot *
@@ -1890,7 +1934,7 @@ function drawChart(
       1,
       Math.ceil(
         (
-          visible.length -
+          visibleCount -
           1
         ) /
         (
@@ -1921,7 +1965,7 @@ function drawChart(
     "#7f8ba3";
 
   ctx.font =
-    "10px Arial";
+    "13px Arial";
 
   ctx.textAlign =
     "center";
@@ -1945,7 +1989,7 @@ function drawChart(
 
     const date =
       new Date(
-        candle.time
+        entry.time
       );
 
     let label;
@@ -2002,70 +2046,28 @@ function drawChart(
     );
   }
 
-  if (visible.length) {
+  // Mark the newest real candle when it is visible, so the user can
+  // clearly distinguish live history from the future-time area.
+  const latestEntry =
+    visibleEntries.find(
+      entry => entry.index === candles.length - 1
+    );
 
-    const lastIndex =
-      visible.length -
-      1;
-
-    const last =
-      visible[lastIndex];
-
+  if (latestEntry) {
     const x =
-      (startIndex + lastIndex - startIndex) *
-      step +
+      latestEntry.slot * step +
       step / 2;
 
-    const date =
-      new Date(
-        last.time
-      );
-
-    const label =
-      currentInterval === "1d" ||
-      currentInterval === "1w"
-
-        ? date.toLocaleDateString(
-            "en-US",
-            {
-              month:"short",
-              day:"numeric",
-              year:"numeric"
-            }
-          )
-
-        : date.toLocaleDateString(
-            "en-US",
-            {
-              month:"short",
-              day:"numeric"
-            }
-          ) +
-          " " +
-          date.toLocaleTimeString(
-            "en-US",
-            {
-              hour:"2-digit",
-              minute:"2-digit",
-              hour12:false
-            }
-          );
-
-    const safeX =
-      Math.max(
-        34,
-        Math.min(
-          plotWidth - 34,
-          x
-        )
-      );
-
+    ctx.fillStyle = "#5d6b83";
+    ctx.font = "11px Arial";
+    ctx.textAlign = "center";
     ctx.fillText(
-      label,
-      safeX,
-      dateAxisY
+      "NOW",
+      Math.max(34, Math.min(plotWidth - 34, x)),
+      h - 21
     );
   }
+
 }
 
 
