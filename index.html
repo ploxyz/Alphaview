@@ -147,6 +147,7 @@
     }
     canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;display:block}
     .chart-wrap.dragging canvas{cursor:grabbing}
+    .chart-wrap.price-scaling canvas{cursor:ns-resize}
     .chart-history-controls{
       display:flex;
       align-items:center;
@@ -655,6 +656,14 @@ let isDraggingChart = false;
 let dragStartX = 0;
 let dragStartOffset = 0;
 
+// Vertical price-axis scaling
+let priceScale = 1;
+let isDraggingPriceAxis = false;
+let priceAxisStartY = 0;
+let priceAxisStartScale = 1;
+const MIN_PRICE_SCALE = 0.25;
+const MAX_PRICE_SCALE = 8;
+
 
 // ===============================
 // CANVAS
@@ -788,9 +797,23 @@ canvas.addEventListener(
     if (!currentCandles.length)
       return;
 
-    canvas.setPointerCapture?.(
-      e.pointerId
-    );
+    const rect = canvas.getBoundingClientRect();
+    const priceAxisWidth = 82;
+    const plotWidth = Math.max(1, rect.width - priceAxisWidth);
+    const localX = e.clientX - rect.left;
+
+    canvas.setPointerCapture?.(e.pointerId);
+
+    // Dragging directly on the price labels/axis scales the candle height.
+    if (localX >= plotWidth) {
+      isDraggingPriceAxis = true;
+      priceAxisStartY = e.clientY;
+      priceAxisStartScale = priceScale;
+      document
+        .querySelector(".chart-wrap")
+        .classList.add("price-scaling");
+      return;
+    }
 
     startDrag(e.clientX);
   }
@@ -799,6 +822,23 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointermove",
   e => {
+
+    if (isDraggingPriceAxis) {
+      // Move upward = zoom the price scale in (taller candles).
+      // Move downward = zoom the price scale out.
+      const dy = e.clientY - priceAxisStartY;
+      const nextScale =
+        priceAxisStartScale *
+        Math.exp(-dy * 0.012);
+
+      priceScale = Math.max(
+        MIN_PRICE_SCALE,
+        Math.min(MAX_PRICE_SCALE, nextScale)
+      );
+
+      redrawChart();
+      return;
+    }
 
     if (!isDraggingChart)
       return;
@@ -809,12 +849,26 @@ canvas.addEventListener(
 
 canvas.addEventListener(
   "pointerup",
-  stopDrag
+  e => {
+    if (isDraggingPriceAxis) {
+      isDraggingPriceAxis = false;
+      document
+        .querySelector(".chart-wrap")
+        .classList.remove("price-scaling");
+    }
+    stopDrag();
+  }
 );
 
 canvas.addEventListener(
   "pointercancel",
-  stopDrag
+  e => {
+    isDraggingPriceAxis = false;
+    document
+      .querySelector(".chart-wrap")
+      .classList.remove("price-scaling");
+    stopDrag();
+  }
 );
 
 canvas.addEventListener(
@@ -1529,10 +1583,24 @@ function drawChart(
       )
     );
 
-  const range =
+  const rawRange =
     maxPrice -
     minPrice ||
     1;
+
+  // Price-axis scaling changes only the vertical price range,
+  // leaving horizontal candle count/zoom untouched.
+  const centerPrice =
+    (maxPrice + minPrice) / 2;
+
+  const range =
+    rawRange / priceScale;
+
+  const displayMaxPrice =
+    centerPrice + range / 2;
+
+  const displayMinPrice =
+    centerPrice - range / 2;
 
   const step =
     plotWidth /
@@ -1557,7 +1625,7 @@ function drawChart(
       paddingTop +
       (
         (
-          maxPrice -
+          displayMaxPrice -
           price
         ) /
         range
@@ -1609,7 +1677,7 @@ function drawChart(
   ) {
 
     const price =
-      maxPrice -
+      displayMaxPrice -
       (
         range /
         4
@@ -2291,6 +2359,8 @@ document
           chartZoom =
             1;
 
+          priceScale = 1;
+
           setAssetInfo(
             symbol
           );
@@ -2474,6 +2544,8 @@ document
 
           chartZoom =
             1;
+
+          priceScale = 1;
 
           await loadMarket(
             interval,
