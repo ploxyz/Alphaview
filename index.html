@@ -381,14 +381,14 @@
             <button id="historyLeft" type="button">← Older</button>
             <button id="historyRight" type="button">Newer →</button>
             <span>
-              Drag to browse all loaded candles · Wheel to zoom (100 → 1000)
+              Drag to browse history/future · Wheel / pinch to zoom (100 → 1000)
             </span>
           </div>
 
           <div class="indicator-bar">
 
             <div class="indicator">
-              <span>RSI (섹스)</span>
+              <span>RSI (14)</span>
               <strong>62.45</strong>
               <small>Neutral</small>
             </div>
@@ -682,13 +682,6 @@ let dragStartVerticalOffset = 0;
 // Vertical price-axis scaling
 let priceScale = 1;
 let isDraggingPriceAxis = false;
-
-// Mobile two-finger pinch zoom state
-const activePointers = new Map();
-let isPinching = false;
-let pinchStartDistance = 0;
-let pinchStartZoom = 1;
-let pinchStartCenterX = 0;
 let priceAxisStartY = 0;
 let priceAxisStartScale = 1;
 const MIN_PRICE_SCALE = 0.25;
@@ -835,33 +828,6 @@ canvas.addEventListener(
     if (!currentCandles.length)
       return;
 
-    // Track touch pointers so two fingers can pinch-zoom instead of
-    // triggering the normal chart drag.
-    if (e.pointerType === "touch") {
-      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      canvas.setPointerCapture?.(e.pointerId);
-
-      if (activePointers.size === 2) {
-        isPinching = true;
-        isDraggingChart = false;
-        isDraggingPriceAxis = false;
-        document
-          .querySelector(".chart-wrap")
-          .classList.remove("dragging", "price-scaling");
-
-        const pts = [...activePointers.values()];
-        pinchStartDistance = Math.hypot(
-          pts[1].x - pts[0].x,
-          pts[1].y - pts[0].y
-        );
-        pinchStartZoom = chartZoom;
-        pinchStartCenterX =
-          ((pts[0].x + pts[1].x) / 2) -
-          canvas.getBoundingClientRect().left;
-        return;
-      }
-    }
-
     const rect = canvas.getBoundingClientRect();
     const priceAxisWidth = 105;
     const plotWidth = Math.max(1, rect.width - priceAxisWidth);
@@ -869,8 +835,7 @@ canvas.addEventListener(
 
     canvas.setPointerCapture?.(e.pointerId);
 
-    // Do not start a one-finger drag until it is clear that this is not
-    // becoming a two-finger gesture. A second touch cancels the drag above.
+    // Dragging directly on the price labels/axis scales the candle height.
     if (localX >= plotWidth) {
       isDraggingPriceAxis = true;
       priceAxisStartY = e.clientY;
@@ -888,42 +853,6 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointermove",
   e => {
-
-    if (e.pointerType === "touch" && activePointers.has(e.pointerId)) {
-      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (isPinching && activePointers.size >= 2) {
-        const pts = [...activePointers.values()].slice(0, 2);
-        const distance = Math.max(1, Math.hypot(
-          pts[1].x - pts[0].x,
-          pts[1].y - pts[0].y
-        ));
-        const ratio = distance / Math.max(1, pinchStartDistance);
-        const oldZoom = chartZoom;
-        chartZoom = Math.max(
-          MIN_CHART_ZOOM,
-          Math.min(MAX_CHART_ZOOM, pinchStartZoom * ratio)
-        );
-
-        // Keep the content underneath the pinch center stable.
-        const rect = canvas.getBoundingClientRect();
-        const plotWidth = Math.max(1, rect.width - 105);
-        const centerRatio = Math.max(0, Math.min(1, pinchStartCenterX / plotWidth));
-        const baseVisible = Math.min(INITIAL_VISIBLE_COUNT, currentCandles.length);
-        const oldVisible = Math.max(
-          MIN_VISIBLE_CANDLES,
-          Math.min(currentCandles.length, Math.round(baseVisible / oldZoom))
-        );
-        const newVisible = Math.max(
-          MIN_VISIBLE_CANDLES,
-          Math.min(currentCandles.length, Math.round(baseVisible / chartZoom))
-        );
-        chartOffset += (oldVisible - newVisible) * centerRatio;
-
-        redrawChart();
-        return;
-      }
-    }
 
     if (isDraggingPriceAxis) {
       // Move upward = zoom the price scale in (taller candles).
@@ -952,17 +881,6 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointerup",
   e => {
-    if (e.pointerType === "touch") {
-      activePointers.delete(e.pointerId);
-      if (isPinching) {
-        if (activePointers.size < 2) {
-          isPinching = false;
-          pinchStartDistance = 0;
-        }
-        return;
-      }
-    }
-
     if (isDraggingPriceAxis) {
       isDraggingPriceAxis = false;
       document
@@ -976,13 +894,6 @@ canvas.addEventListener(
 canvas.addEventListener(
   "pointercancel",
   e => {
-    if (e.pointerType === "touch") {
-      activePointers.delete(e.pointerId);
-      if (activePointers.size < 2) {
-        isPinching = false;
-        pinchStartDistance = 0;
-      }
-    }
     isDraggingPriceAxis = false;
     document
       .querySelector(".chart-wrap")
@@ -1144,8 +1055,7 @@ historyLeft?.addEventListener(
       Math.min(
         Math.max(
           0,
-          currentCandles.length -
-          1
+          currentCandles.length - 1 + getFutureSlots()
         ),
         chartOffset +
         Math.max(
@@ -1603,6 +1513,58 @@ function setAssetInfo(symbol) {
 
 
 // ===============================
+// TECHNICAL INDICATORS
+// ===============================
+function calculateEMA(values, period) {
+  if (!values.length) return null;
+  const k = 2 / (period + 1);
+  let ema = values[0];
+  for (let i = 1; i < values.length; i++) ema = values[i] * k + ema * (1 - k);
+  return ema;
+}
+function calculateRSI(closes, period = 14) {
+  if (closes.length <= period) return null;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) { const d = closes[i] - closes[i-1]; if (d >= 0) gains += d; else losses -= d; }
+  let avgGain = gains / period, avgLoss = losses / period;
+  for (let i = period + 1; i < closes.length; i++) { const d = closes[i] - closes[i-1]; const gain = Math.max(d,0), loss = Math.max(-d,0); avgGain = (avgGain*(period-1)+gain)/period; avgLoss = (avgLoss*(period-1)+loss)/period; }
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+function calculateStochastic(candles, period = 14) {
+  if (candles.length < period) return null;
+  const slice = candles.slice(-period), high = Math.max(...slice.map(c=>c.high)), low = Math.min(...slice.map(c=>c.low)), close = slice[slice.length-1].close;
+  return high === low ? 50 : ((close-low)/(high-low))*100;
+}
+function calculateMACD(closes, fast=12, slow=26, signal=9) {
+  if (closes.length < slow + signal) return null;
+  const kf=2/(fast+1), ks=2/(slow+1); let ef=closes[0], es=closes[0], macd=[];
+  for(let i=1;i<closes.length;i++){ ef=closes[i]*kf+ef*(1-kf); es=closes[i]*ks+es*(1-ks); macd.push(ef-es); }
+  const line=macd[macd.length-1], sig=calculateEMA(macd.slice(-signal),signal);
+  return {macd:line,signal:sig,histogram:line-sig};
+}
+function updateIndicators(candles) {
+  if (!candles || candles.length < 30) return;
+  const closes=candles.map(c=>c.close), rsi=calculateRSI(closes), macd=calculateMACD(closes), stoch=calculateStochastic(candles);
+  const ema20=calculateEMA(closes,20), ema50=calculateEMA(closes,50), ema200=calculateEMA(closes,200);
+  const cells=document.querySelectorAll('.indicator');
+  if(cells.length<4) return;
+  cells[0].querySelector('strong').textContent=rsi==null?'--':rsi.toFixed(2);
+  cells[0].querySelector('small').textContent=rsi>=70?'Overbought':rsi<=30?'Oversold':'Neutral';
+  cells[1].querySelector('strong').textContent=macd?macd.macd.toFixed(2):'--';
+  cells[1].querySelector('small').textContent=macd?(macd.histogram>=0?'Bullish':'Bearish'):'--';
+  cells[1].querySelector('small').className=macd&&macd.histogram>=0?'up':'down';
+  cells[2].querySelector('strong').textContent=stoch==null?'--':stoch.toFixed(2);
+  cells[2].querySelector('small').textContent=stoch>=80?'Overbought':stoch<=20?'Oversold':stoch>=50?'Bullish':'Bearish';
+  cells[2].querySelector('small').className=stoch>=50?'up':'down';
+  const bull=closes.at(-1)>=ema20&&ema20>=ema50&&ema50>=ema200;
+  cells[3].querySelector('strong').textContent=`20 ${ema20.toFixed(2)} · 50 ${ema50.toFixed(2)}`;
+  cells[3].querySelector('small').textContent=`200 ${ema200.toFixed(2)} · ${bull?'Bullish':'Mixed'}`;
+  cells[3].querySelector('small').className=bull?'up':'';
+}
+
+// ===============================
 // DRAW CANDLES
 // ===============================
 
@@ -1814,6 +1776,11 @@ function drawChart(
 
   ctx.stroke();
 
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, w, h - 20);
+  ctx.clip();
+
   ctx.fillStyle =
     "#7f8ba3";
 
@@ -1839,6 +1806,7 @@ function drawChart(
 
     const y =
       paddingTop +
+      chartVerticalOffset +
       (
         chartHeight /
         4
@@ -1871,6 +1839,7 @@ function drawChart(
       y + 3
     );
   }
+  ctx.restore();
 
   visibleEntries.forEach(
     ({candle, slot}) => {
@@ -2249,6 +2218,8 @@ async function loadMarket(
     currentCandles =
       candles;
 
+    updateIndicators(currentCandles);
+
     const initialVisible =
       Math.min(
         INITIAL_VISIBLE_COUNT,
@@ -2409,6 +2380,7 @@ function connectRealtime(
         }
       }
 
+      updateIndicators(currentCandles);
       redrawChart();
 
       const priceElement =
