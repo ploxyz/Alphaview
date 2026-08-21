@@ -1602,6 +1602,69 @@ function updateIndicators(candles) {
 }
 
 // ===============================
+// MACRO MARKET DATA
+// ===============================
+
+async function fetchMacroMarketData() {
+  try {
+    const [globalRes, fgRes] = await Promise.all([
+      fetch("https://api.alternative.me/v2/global/"),
+      fetch("https://api.alternative.me/fng/?limit=1")
+    ]);
+
+    if (!globalRes.ok || !fgRes.ok) throw new Error("Macro API error");
+
+    const globalJson = await globalRes.json();
+    const fgJson = await fgRes.json();
+    const g = globalJson.data || {};
+    const usd = g.quotes?.USD || {};
+    const fg = fgJson.data?.[0] || {};
+
+    const marketCap = Number(usd.total_market_cap || 0);
+    const dominance = Number(g.bitcoin_percentage_of_market_cap || 0);
+    const fearGreed = Number(fg.value || 0);
+    const fearGreedLabel = fg.value_classification || "--";
+
+    const cards = document.querySelectorAll('.ticker-card');
+    const macro = Array.from(cards).filter(card => !card.dataset.symbol);
+
+    if (macro[0] && marketCap) {
+      macro[0].querySelector('strong').textContent = formatCompactMoney(marketCap);
+    }
+    if (macro[1] && dominance) {
+      macro[1].querySelector('strong').textContent = dominance.toFixed(2) + '%';
+    }
+    if (macro[2] && fearGreed) {
+      const strong = macro[2].querySelector('strong');
+      strong.textContent = String(fearGreed);
+      strong.className = fearGreed >= 55 ? 'up' : fearGreed <= 45 ? 'down' : '';
+      const small = macro[2].querySelector('small');
+      if (small) small.textContent = fearGreedLabel;
+    }
+
+    // Expose the latest macro snapshot for timeframe-aware UI/state.
+    window.alphaviewMacro = {
+      interval: currentInterval,
+      updatedAt: Number(g.last_updated || fg.timestamp || Date.now()/1000) * 1000,
+      marketCap,
+      btcDominance: dominance,
+      fearGreed,
+      fearGreedLabel
+    };
+  } catch (err) {
+    console.warn('Macro market API unavailable:', err);
+  }
+}
+
+function formatCompactMoney(value) {
+  if (!Number.isFinite(value)) return '--';
+  if (value >= 1e12) return '$' + (value / 1e12).toFixed(2) + 'T';
+  if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
+  if (value >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
+  return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+// ===============================
 // DRAW CANDLES
 // ===============================
 
@@ -1624,8 +1687,13 @@ function drawChart(
   const paddingTop =
     15;
 
-  const paddingBottom =
-    105;
+  // The price chart and volume chart are physically separated into two
+  // fixed vertical regions. Candle scaling/panning can never enter the
+  // volume region.
+  const dateAxisHeight = 28;
+  const volumeRegionHeight = 105;
+  const regionGap = 10;
+  const paddingBottom = dateAxisHeight + volumeRegionHeight + regionGap;
 
   const priceAxisWidth =
     105;
@@ -1637,10 +1705,11 @@ function drawChart(
       priceAxisWidth
     );
 
+  const priceRegionTop = paddingTop;
+  const priceRegionBottom =
+    h - volumeRegionHeight - dateAxisHeight - regionGap;
   const chartHeight =
-    h -
-    paddingTop -
-    paddingBottom;
+    Math.max(40, priceRegionBottom - priceRegionTop);
 
   const baseVisible =
     Math.min(
@@ -1791,7 +1860,7 @@ function drawChart(
   // move the background together with the data.
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, 0, plotWidth, h - 20);
+  ctx.rect(0, priceRegionTop, plotWidth, chartHeight);
   ctx.clip();
 
   ctx.strokeStyle = "rgba(77,101,135,.11)";
@@ -1812,8 +1881,8 @@ function drawChart(
   for (let i = 0; i < visibleEntries.length; i += verticalEvery) {
     const x = i * step + step / 2;
     ctx.beginPath();
-    ctx.moveTo(x, paddingTop + chartVerticalOffset);
-    ctx.lineTo(x, paddingTop + chartVerticalOffset + chartHeight);
+    ctx.moveTo(x, priceRegionTop);
+    ctx.lineTo(x, priceRegionBottom);
     ctx.stroke();
   }
 
@@ -1848,7 +1917,7 @@ function drawChart(
 
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, 0, w, h - 20);
+  ctx.rect(0, priceRegionTop, w, chartHeight);
   ctx.clip();
 
   ctx.fillStyle =
@@ -1975,55 +2044,46 @@ function drawChart(
     }
   );
 
-  const maxVolume =
-    Math.max(
-      ...visibleRealCandles.map(
-        c => c.volume
-      ),
-      1
-    );
+  // ===============================
+  // VOLUME REGION — independent from price region
+  // ===============================
+  const volumeRegionTop = priceRegionBottom + regionGap;
+  const volumeRegionBottom = h - dateAxisHeight;
+  const volumeHeight = Math.max(24, volumeRegionBottom - volumeRegionTop - 8);
 
-  const volumeHeight =
-    68;
+  // Divider between price and volume areas.
+  ctx.strokeStyle = "rgba(77,101,135,.28)";
+  ctx.beginPath();
+  ctx.moveTo(0, volumeRegionTop - regionGap / 2);
+  ctx.lineTo(plotWidth, volumeRegionTop - regionGap / 2);
+  ctx.stroke();
 
-  const volumeBottom =
-    h - 30;
+  // Volume background/grid stays locked to the same candle slots.
+  ctx.fillStyle = "rgba(8,18,32,.72)";
+  ctx.fillRect(0, volumeRegionTop, plotWidth, volumeRegionBottom - volumeRegionTop);
 
-  visibleEntries.forEach(
-    ({candle, slot}) => {
-
-      if (!candle) return;
-
-      const x =
-        slot *
-        step +
-        step / 2;
-
-      const volume =
-        (
-          candle.volume /
-          maxVolume
-        ) *
-        volumeHeight;
-
-      ctx.fillStyle =
-        candle.close >=
-        candle.open
-          ? "rgba(0,214,154,.35)"
-          : "rgba(255,82,102,.35)";
-
-      ctx.fillRect(
-        x -
-        candleWidth / 2,
-
-        volumeBottom -
-        volume,
-
-        candleWidth,
-        volume
-      );
-    }
+  const maxVolume = Math.max(
+    ...visibleRealCandles.map(c => c.volume),
+    1
   );
+
+  visibleEntries.forEach(({candle, slot}) => {
+    if (!candle) return;
+
+    const x = slot * step + step / 2;
+    const volume = (candle.volume / maxVolume) * volumeHeight;
+
+    ctx.fillStyle = candle.close >= candle.open
+      ? "rgba(0,214,154,.55)"
+      : "rgba(255,82,102,.55)";
+
+    ctx.fillRect(
+      x - candleWidth / 2,
+      volumeRegionBottom - volume,
+      candleWidth,
+      volume
+    );
+  });
 
   const dateAxisY =
     h - 7;
@@ -2586,6 +2646,7 @@ window.addEventListener(
     );
 
     updateTickerCards();
+    fetchMacroMarketData();
   }
 );
 
@@ -2593,6 +2654,10 @@ setInterval(
   updateTickerCards,
   10000
 );
+
+// Alternative.me updates its public global/Fear & Greed data on a slower
+// cadence, so avoid hammering the API while still keeping the dashboard fresh.
+setInterval(fetchMacroMarketData, 5 * 60 * 1000);
 
 
 // Refresh selected asset's stats
@@ -2694,6 +2759,9 @@ document
             interval,
             currentSymbol
           );
+
+          // Refresh macro snapshot whenever the chart timeframe changes.
+          await fetchMacroMarketData();
 
           if (
             currentCandles.length
